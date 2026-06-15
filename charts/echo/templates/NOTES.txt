@@ -1,0 +1,22 @@
+echo {{ .Chart.AppVersion }} is deployed as {{ include "echo.fullname" . }} in namespace {{ .Release.Namespace }}.
+
+Every request it receives is echoed back to the caller as JSON.
+
+Try it from inside the cluster:
+
+  kubectl -n {{ .Release.Namespace }} run echo-curl --rm -it --restart=Never --image=curlimages/curl -- \
+    curl -s "http://{{ include "echo.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}/hello?name=world"
+{{- if .Values.ingress.enabled }}
+
+Or via the configured Ingress host(s):
+{{- range .Values.ingress.hosts }}
+  http://{{ .host }}
+{{- end }}
+{{- end }}
+{{- if .Values.httpRoute.enabled }}
+
+Or via the configured HTTPRoute hostname(s):
+{{- range .Values.httpRoute.hostnames }}
+  http://{{ . }}
+{{- end }}
+{{- end }}

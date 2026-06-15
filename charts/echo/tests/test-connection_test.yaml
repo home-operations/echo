@@ -1,0 +1,19 @@
+suite: test-connection
+templates:
+  - tests/test-connection.tpl
+  - _helpers.tpl
+tests:
+  - it: is a helm test hook pod
+    template: tests/test-connection.tpl
+    asserts:
+      - isKind:
+          of: Pod
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: test
+      - equal:
+          path: spec.restartPolicy
+          value: Never
+      - matchRegex:
+          path: spec.containers[0].image
+          pattern: '^mirror\.gcr\.io/curlimages/curl:'
