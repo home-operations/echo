@@ -3,16 +3,14 @@
 ARG GO_VERSION
 
 # ---- Build ----------------------------------------------------------------
-FROM golang:${GO_VERSION} AS builder
+FROM golang:${GO_VERSION}-alpine AS builder
 ARG TARGETOS
 ARG TARGETARCH
 ARG VERSION=dev
 ARG REVISION=dev
 
 # upx (build stage only) compresses the final binary to shrink the image.
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends upx-ucl \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache upx
 
 WORKDIR /workspace
 COPY go.mod go.sum ./
@@ -29,9 +27,9 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} \
 RUN upx --best --lzma echo
 
 # ---- Runtime --------------------------------------------------------------
-# scratch: echo is a static (CGO_ENABLED=0) binary that makes no outbound TLS
-# calls and reads no user database, so it needs neither CA certs nor /etc/passwd.
-# The chart's podSecurityContext runs it as non-root (uid/gid 65532).
-FROM scratch
+# distroless/static:nonroot — the fleet-standard runtime base for our static
+# (CGO_ENABLED=0) Go binaries: it bundles CA certs, /etc/passwd, and a nonroot
+# user (uid/gid 65532), so no files need carrying over and no USER is needed.
+FROM gcr.io/distroless/static:nonroot
 COPY --from=builder /workspace/echo /echo
 ENTRYPOINT ["/echo"]

@@ -541,6 +541,11 @@
     "podSecurityContext": {
       "description": "Pod-level securityContext (runs as non-root uid/gid 65532 with the default seccomp profile).",
       "properties": {
+        "fsGroup": {
+          "default": 65532,
+          "title": "fsGroup",
+          "type": "integer"
+        },
         "runAsGroup": {
           "default": 65532,
           "title": "runAsGroup",
