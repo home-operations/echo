@@ -1,0 +1,24 @@
+suite: servicemonitor
+templates:
+  - servicemonitor.tpl
+  - _helpers.tpl
+tests:
+  - it: is not rendered by default
+    template: servicemonitor.tpl
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: scrapes the metrics port when enabled
+    template: servicemonitor.tpl
+    set:
+      monitoring.serviceMonitor.enabled: true
+    asserts:
+      - isKind:
+          of: ServiceMonitor
+      - equal:
+          path: spec.endpoints[0].port
+          value: metrics
+      - equal:
+          path: spec.endpoints[0].path
+          value: /metrics

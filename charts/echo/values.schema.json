@@ -1,0 +1,836 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "affinity": {
+      "description": "Affinity rules for pod scheduling (templated).",
+      "required": [],
+      "title": "affinity",
+      "type": "object"
+    },
+    "autoscaling": {
+      "description": "Horizontal Pod Autoscaler. When enabled, the Deployment omits its own replicas\nfield so the HPA owns scaling.",
+      "properties": {
+        "behavior": {
+          "description": "Scaling behavior (scaleUp/scaleDown policies, templated); empty uses the cluster defaults.",
+          "required": [],
+          "title": "behavior",
+          "type": "object"
+        },
+        "enabled": {
+          "default": false,
+          "description": "Create a HorizontalPodAutoscaler (autoscaling/v2) targeting the Deployment.",
+          "title": "enabled",
+          "type": "boolean"
+        },
+        "maxReplicas": {
+          "default": 5,
+          "description": "Maximum replicas.",
+          "title": "maxReplicas",
+          "type": "integer"
+        },
+        "minReplicas": {
+          "default": 1,
+          "description": "Minimum replicas.",
+          "title": "minReplicas",
+          "type": "integer"
+        },
+        "targetCPUUtilizationPercentage": {
+          "default": 80,
+          "description": "Target average CPU utilization (%); 0 disables the CPU metric.",
+          "title": "targetCPUUtilizationPercentage",
+          "type": "integer"
+        },
+        "targetMemoryUtilizationPercentage": {
+          "default": 0,
+          "description": "Target average memory utilization (%); 0 disables the memory metric.",
+          "title": "targetMemoryUtilizationPercentage",
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "title": "autoscaling",
+      "type": "object"
+    },
+    "config": {
+      "description": "echo's runtime configuration. Each key maps to an ECHO_* environment variable\nthe binary reads; see the README for the full reference.",
+      "properties": {
+        "disableRequestLogs": {
+          "default": false,
+          "description": "Silence the per-request access log (ECHO_DISABLE_REQUEST_LOGS); the echo response is unaffected.",
+          "title": "disableRequestLogs",
+          "type": "boolean"
+        },
+        "echoBackToClient": {
+          "default": true,
+          "description": "Return the JSON document to the client (ECHO_BACK_TO_CLIENT); false replies 204 No Content.",
+          "title": "echoBackToClient",
+          "type": "boolean"
+        },
+        "httpPort": {
+          "default": 8080,
+          "description": "HTTP listen port (ECHO_HTTP_PORT).",
+          "title": "httpPort",
+          "type": "integer"
+        },
+        "kubernetes": {
+          "default": false,
+          "description": "Add a `kubernetes` object (pod/namespace/IP/node) to responses, injected via the Downward API (ECHO_KUBERNETES). Off by default; it reveals cluster topology to callers.",
+          "title": "kubernetes",
+          "type": "boolean"
+        },
+        "logFormat": {
+          "default": "json",
+          "description": "Log format (ECHO_LOG_FORMAT): json or text.",
+          "title": "logFormat",
+          "type": "string"
+        },
+        "logLevel": {
+          "default": "info",
+          "description": "Log level (ECHO_LOG_LEVEL): debug, info, warn, or error.",
+          "title": "logLevel",
+          "type": "string"
+        },
+        "maxBodyBytes": {
+          "default": 1048576,
+          "description": "Maximum request body bytes read and echoed (ECHO_MAX_BODY_BYTES); larger bodies are flagged truncated.",
+          "title": "maxBodyBytes",
+          "type": "integer"
+        },
+        "metricsEnabled": {
+          "default": true,
+          "description": "Expose Prometheus metrics at /metrics on metricsPort (ECHO_METRICS_ENABLED).",
+          "title": "metricsEnabled",
+          "type": "boolean"
+        },
+        "metricsPort": {
+          "default": 9090,
+          "description": "Metrics listen port; exported to the binary as ECHO_METRICS_ADDR=\":\u003cmetricsPort\u003e\".",
+          "title": "metricsPort",
+          "type": "integer"
+        },
+        "trustedProxies": {
+          "description": "CIDRs whose X-Forwarded-For header is trusted for client-IP resolution (ECHO_TRUSTED_PROXIES); comma-joined into the env var.",
+          "items": {
+            "required": []
+          },
+          "title": "trustedProxies",
+          "type": "array"
+        },
+        "wsAllowedOrigins": {
+          "description": "Origin host patterns allowed to open a WebSocket (ECHO_WS_ALLOWED_ORIGINS); empty allows any origin (the endpoint only echoes the caller's own frames).",
+          "items": {
+            "required": []
+          },
+          "title": "wsAllowedOrigins",
+          "type": "array"
+        },
+        "wsEnabled": {
+          "default": true,
+          "description": "Serve a WebSocket echo at /ws (ECHO_WS_ENABLED); non-upgrade requests to /ws fall through to the HTTP echo.",
+          "title": "wsEnabled",
+          "type": "boolean"
+        }
+      },
+      "required": [],
+      "title": "config",
+      "type": "object"
+    },
+    "deploymentAnnotations": {
+      "description": "Annotations added to the Deployment (workload) metadata, e.g. `reloader.stakater.com/auto: \"true\"`.",
+      "required": [],
+      "title": "deploymentAnnotations",
+      "type": "object"
+    },
+    "env": {
+      "description": "Extra environment variables for the echo container, as a map (templated).",
+      "required": [],
+      "title": "env",
+      "type": "object"
+    },
+    "envFrom": {
+      "description": "Sources of environment variables for the echo container (templated), e.g. a Secret with TLS material.",
+      "items": {
+        "required": []
+      },
+      "title": "envFrom",
+      "type": "array"
+    },
+    "extraEnv": {
+      "description": "  TZ: UTC\nExtra environment variables for the echo container, as a raw list (templated).",
+      "items": {
+        "required": []
+      },
+      "title": "extraEnv",
+      "type": "array"
+    },
+    "fullnameOverride": {
+      "default": "",
+      "description": "Override the generated name used for every resource's `metadata.name` (the chart \"fullname\").",
+      "title": "fullnameOverride",
+      "type": "string"
+    },
+    "global": {
+      "description": "Global values are values that can be accessed from any chart or subchart by exactly the same name.",
+      "required": [],
+      "title": "global",
+      "type": "object"
+    },
+    "httpRoute": {
+      "description": "Gateway API HTTPRoute — an alternative to `ingress` for clusters using the\nGateway API. Named `httpRoute` (not `route`) to avoid confusion with the\nOpenShift Route kind.",
+      "properties": {
+        "annotations": {
+          "description": "HTTPRoute annotations.",
+          "required": [],
+          "title": "annotations",
+          "type": "object"
+        },
+        "apiVersion": {
+          "default": "",
+          "description": "HTTPRoute apiVersion; empty defaults to gateway.networking.k8s.io/v1.",
+          "title": "apiVersion",
+          "type": "string"
+        },
+        "enabled": {
+          "default": false,
+          "description": "Expose echo via a Gateway API HTTPRoute (alternative to ingress).",
+          "title": "enabled",
+          "type": "boolean"
+        },
+        "hostnames": {
+          "description": " - name: gateway\n   namespace: gateway\n   sectionName: https\nHostnames matched against the Host header (templated).",
+          "items": {
+            "required": []
+          },
+          "title": "hostnames",
+          "type": "array"
+        },
+        "kind": {
+          "default": "",
+          "description": "HTTPRoute kind; empty defaults to HTTPRoute.",
+          "title": "kind",
+          "type": "string"
+        },
+        "labels": {
+          "description": "HTTPRoute labels.",
+          "required": [],
+          "title": "labels",
+          "type": "object"
+        },
+        "matches": {
+          "description": " - echo.example.com\nMatch conditions for the default rule.",
+          "items": {
+            "anyOf": [
+              {
+                "properties": {
+                  "path": {
+                    "properties": {
+                      "type": {
+                        "default": "PathPrefix",
+                        "title": "type",
+                        "type": "string"
+                      },
+                      "value": {
+                        "default": "/",
+                        "title": "value",
+                        "type": "string"
+                      }
+                    },
+                    "required": [],
+                    "title": "path",
+                    "type": "object"
+                  }
+                },
+                "required": [],
+                "type": "object"
+              }
+            ],
+            "required": []
+          },
+          "title": "matches",
+          "type": "array"
+        },
+        "parentRefs": {
+          "description": "Gateways (and listeners) this route attaches to.",
+          "items": {
+            "required": []
+          },
+          "title": "parentRefs",
+          "type": "array"
+        }
+      },
+      "required": [],
+      "title": "httpRoute",
+      "type": "object"
+    },
+    "image": {
+      "properties": {
+        "digest": {
+          "default": "",
+          "description": "Pin the image by digest (sha256:…); set by the release pipeline. When set, it overrides the tag.",
+          "title": "digest",
+          "type": "string"
+        },
+        "pullPolicy": {
+          "default": "IfNotPresent",
+          "description": "Image pull policy.",
+          "title": "pullPolicy",
+          "type": "string"
+        },
+        "repository": {
+          "default": "ghcr.io/home-operations/echo",
+          "description": "echo image repository.",
+          "title": "repository",
+          "type": "string"
+        },
+        "tag": {
+          "default": "",
+          "description": "Overrides the image tag; defaults to the chart appVersion.",
+          "title": "tag",
+          "type": "string"
+        }
+      },
+      "required": [],
+      "title": "image",
+      "type": "object"
+    },
+    "imagePullSecrets": {
+      "description": "Image pull secrets for private registries.",
+      "items": {
+        "required": []
+      },
+      "title": "imagePullSecrets",
+      "type": "array"
+    },
+    "ingress": {
+      "properties": {
+        "annotations": {
+          "description": "Ingress annotations.",
+          "required": [],
+          "title": "annotations",
+          "type": "object"
+        },
+        "className": {
+          "default": "",
+          "description": "IngressClass name.",
+          "title": "className",
+          "type": "string"
+        },
+        "enabled": {
+          "default": false,
+          "description": "Expose echo via an Ingress.",
+          "title": "enabled",
+          "type": "boolean"
+        },
+        "hosts": {
+          "description": "Ingress hosts and their paths.",
+          "items": {
+            "anyOf": [
+              {
+                "properties": {
+                  "host": {
+                    "default": "echo.example.com",
+                    "title": "host",
+                    "type": "string"
+                  },
+                  "paths": {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "path": {
+                              "default": "/",
+                              "title": "path",
+                              "type": "string"
+                            },
+                            "pathType": {
+                              "default": "Prefix",
+                              "title": "pathType",
+                              "type": "string"
+                            }
+                          },
+                          "required": [],
+                          "type": "object"
+                        }
+                      ],
+                      "required": []
+                    },
+                    "title": "paths",
+                    "type": "array"
+                  }
+                },
+                "required": [],
+                "type": "object"
+              }
+            ],
+            "required": []
+          },
+          "title": "hosts",
+          "type": "array"
+        },
+        "tls": {
+          "description": "Ingress TLS configuration.",
+          "items": {
+            "required": []
+          },
+          "title": "tls",
+          "type": "array"
+        }
+      },
+      "required": [],
+      "title": "ingress",
+      "type": "object"
+    },
+    "livenessProbe": {
+      "description": "Liveness probe.",
+      "properties": {
+        "httpGet": {
+          "properties": {
+            "path": {
+              "default": "/healthz",
+              "title": "path",
+              "type": "string"
+            },
+            "port": {
+              "default": "http",
+              "title": "port",
+              "type": "string"
+            }
+          },
+          "required": [],
+          "title": "httpGet",
+          "type": "object"
+        },
+        "initialDelaySeconds": {
+          "default": 5,
+          "title": "initialDelaySeconds",
+          "type": "integer"
+        },
+        "periodSeconds": {
+          "default": 20,
+          "title": "periodSeconds",
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "title": "livenessProbe",
+      "type": "object"
+    },
+    "monitoring": {
+      "properties": {
+        "serviceMonitor": {
+          "properties": {
+            "annotations": {
+              "description": "ServiceMonitor annotations.",
+              "required": [],
+              "title": "annotations",
+              "type": "object"
+            },
+            "enabled": {
+              "default": false,
+              "description": "Create a Prometheus Operator ServiceMonitor (requires its CRDs and config.metricsEnabled).",
+              "title": "enabled",
+              "type": "boolean"
+            },
+            "interval": {
+              "default": "30s",
+              "description": "Scrape interval.",
+              "title": "interval",
+              "type": "string"
+            },
+            "labels": {
+              "description": "ServiceMonitor labels.",
+              "required": [],
+              "title": "labels",
+              "type": "object"
+            },
+            "metricRelabelings": {
+              "description": "Prometheus metric relabelings.",
+              "items": {
+                "required": []
+              },
+              "title": "metricRelabelings",
+              "type": "array"
+            },
+            "path": {
+              "default": "/metrics",
+              "description": "Metrics path.",
+              "title": "path",
+              "type": "string"
+            },
+            "relabelings": {
+              "description": "Prometheus relabelings.",
+              "items": {
+                "required": []
+              },
+              "title": "relabelings",
+              "type": "array"
+            },
+            "scrapeTimeout": {
+              "default": "10s",
+              "description": "Scrape timeout.",
+              "title": "scrapeTimeout",
+              "type": "string"
+            }
+          },
+          "required": [],
+          "title": "serviceMonitor",
+          "type": "object"
+        }
+      },
+      "required": [],
+      "title": "monitoring",
+      "type": "object"
+    },
+    "nameOverride": {
+      "default": "",
+      "description": "Override the app name used in the `app.kubernetes.io/name` label.",
+      "title": "nameOverride",
+      "type": "string"
+    },
+    "nodeSelector": {
+      "description": "Node selector for pod scheduling (templated).",
+      "required": [],
+      "title": "nodeSelector",
+      "type": "object"
+    },
+    "podAnnotations": {
+      "description": "Annotations added to the pod.",
+      "required": [],
+      "title": "podAnnotations",
+      "type": "object"
+    },
+    "podDisruptionBudget": {
+      "properties": {
+        "enabled": {
+          "default": false,
+          "description": "Create a PodDisruptionBudget. Off by default; useful when running multiple replicas.",
+          "title": "enabled",
+          "type": "boolean"
+        },
+        "maxUnavailable": {
+          "default": "",
+          "description": "Maximum pods that may be unavailable, as a count or percentage; takes precedence over `minAvailable` when set.",
+          "required": [],
+          "title": "maxUnavailable",
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "minAvailable": {
+          "default": 1,
+          "description": "Minimum pods that must stay available, as a count or percentage. Used unless `maxUnavailable` is set.",
+          "required": [],
+          "title": "minAvailable",
+          "type": [
+            "integer",
+            "string"
+          ]
+        }
+      },
+      "required": [],
+      "title": "podDisruptionBudget",
+      "type": "object"
+    },
+    "podLabels": {
+      "description": "Labels added to the pod.",
+      "required": [],
+      "title": "podLabels",
+      "type": "object"
+    },
+    "podSecurityContext": {
+      "description": "Pod-level securityContext (runs as non-root uid/gid 65532 with the default seccomp profile).",
+      "properties": {
+        "runAsGroup": {
+          "default": 65532,
+          "title": "runAsGroup",
+          "type": "integer"
+        },
+        "runAsNonRoot": {
+          "default": true,
+          "title": "runAsNonRoot",
+          "type": "boolean"
+        },
+        "runAsUser": {
+          "default": 65532,
+          "title": "runAsUser",
+          "type": "integer"
+        },
+        "seccompProfile": {
+          "properties": {
+            "type": {
+              "default": "RuntimeDefault",
+              "title": "type",
+              "type": "string"
+            }
+          },
+          "required": [],
+          "title": "seccompProfile",
+          "type": "object"
+        }
+      },
+      "required": [],
+      "title": "podSecurityContext",
+      "type": "object"
+    },
+    "priorityClassName": {
+      "default": "",
+      "description": "PriorityClass for the pod (templated); empty uses the cluster default.",
+      "title": "priorityClassName",
+      "type": "string"
+    },
+    "readinessProbe": {
+      "description": "Readiness probe.",
+      "properties": {
+        "httpGet": {
+          "properties": {
+            "path": {
+              "default": "/healthz",
+              "title": "path",
+              "type": "string"
+            },
+            "port": {
+              "default": "http",
+              "title": "port",
+              "type": "string"
+            }
+          },
+          "required": [],
+          "title": "httpGet",
+          "type": "object"
+        },
+        "initialDelaySeconds": {
+          "default": 2,
+          "title": "initialDelaySeconds",
+          "type": "integer"
+        },
+        "periodSeconds": {
+          "default": 10,
+          "title": "periodSeconds",
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "title": "readinessProbe",
+      "type": "object"
+    },
+    "replicaCount": {
+      "default": 1,
+      "description": "Number of echo replicas (echo is stateless, so it scales horizontally). Ignored when autoscaling.enabled.",
+      "title": "replicaCount",
+      "type": "integer"
+    },
+    "resources": {
+      "description": "echo container resource requests/limits.",
+      "required": [],
+      "title": "resources",
+      "type": "object"
+    },
+    "securityContext": {
+      "description": "echo container securityContext (no privilege escalation, read-only root filesystem, drops ALL capabilities).",
+      "properties": {
+        "allowPrivilegeEscalation": {
+          "default": false,
+          "title": "allowPrivilegeEscalation",
+          "type": "boolean"
+        },
+        "capabilities": {
+          "properties": {
+            "drop": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  }
+                ],
+                "required": []
+              },
+              "title": "drop",
+              "type": "array"
+            }
+          },
+          "required": [],
+          "title": "capabilities",
+          "type": "object"
+        },
+        "readOnlyRootFilesystem": {
+          "default": true,
+          "title": "readOnlyRootFilesystem",
+          "type": "boolean"
+        }
+      },
+      "required": [],
+      "title": "securityContext",
+      "type": "object"
+    },
+    "service": {
+      "properties": {
+        "annotations": {
+          "description": "Service annotations.",
+          "required": [],
+          "title": "annotations",
+          "type": "object"
+        },
+        "externalTrafficPolicy": {
+          "default": "",
+          "description": "Service externalTrafficPolicy (`Local` preserves the client source IP; only applies to NodePort/LoadBalancer). Empty uses the cluster default.",
+          "title": "externalTrafficPolicy",
+          "type": "string"
+        },
+        "port": {
+          "default": 80,
+          "description": "HTTP service port.",
+          "title": "port",
+          "type": "integer"
+        },
+        "type": {
+          "default": "ClusterIP",
+          "description": "Service type.",
+          "title": "type",
+          "type": "string"
+        }
+      },
+      "required": [],
+      "title": "service",
+      "type": "object"
+    },
+    "serviceAccount": {
+      "properties": {
+        "annotations": {
+          "description": "ServiceAccount annotations.",
+          "required": [],
+          "title": "annotations",
+          "type": "object"
+        },
+        "automount": {
+          "default": false,
+          "description": "Mount the API token. echo never calls the Kubernetes API, so this is off by default.",
+          "title": "automount",
+          "type": "boolean"
+        },
+        "create": {
+          "default": true,
+          "description": "Create a ServiceAccount.",
+          "title": "create",
+          "type": "boolean"
+        },
+        "name": {
+          "default": "",
+          "description": "ServiceAccount name; empty uses the chart fullname.",
+          "title": "name",
+          "type": "string"
+        }
+      },
+      "required": [],
+      "title": "serviceAccount",
+      "type": "object"
+    },
+    "startupProbe": {
+      "description": "Startup probe; gates liveness/readiness until echo is up, so a slow start can't trigger a premature restart. Set to {} to disable.",
+      "properties": {
+        "failureThreshold": {
+          "default": 30,
+          "title": "failureThreshold",
+          "type": "integer"
+        },
+        "httpGet": {
+          "properties": {
+            "path": {
+              "default": "/healthz",
+              "title": "path",
+              "type": "string"
+            },
+            "port": {
+              "default": "http",
+              "title": "port",
+              "type": "string"
+            }
+          },
+          "required": [],
+          "title": "httpGet",
+          "type": "object"
+        },
+        "periodSeconds": {
+          "default": 5,
+          "title": "periodSeconds",
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "title": "startupProbe",
+      "type": "object"
+    },
+    "terminationGracePeriodSeconds": {
+      "default": 30,
+      "description": "Grace period for a clean shutdown.",
+      "title": "terminationGracePeriodSeconds",
+      "type": "integer"
+    },
+    "tests": {
+      "properties": {
+        "image": {
+          "properties": {
+            "pullPolicy": {
+              "default": "IfNotPresent",
+              "description": "`helm test` image pull policy.",
+              "title": "pullPolicy",
+              "type": "string"
+            },
+            "repository": {
+              "default": "mirror.gcr.io/curlimages/curl",
+              "description": "`helm test` connection-pod image; a gcr-mirrored curl, so the test never pulls from Docker Hub.",
+              "title": "repository",
+              "type": "string"
+            },
+            "tag": {
+              "default": "8.11.1@sha256:c1fe1679c34d9784c1b0d1e5f62ac0a79fca01fb6377cdd33e90473c6f9f9a69",
+              "description": "`helm test` image, pinned as `tag",
+              "title": "tag",
+              "type": "string"
+            }
+          },
+          "required": [],
+          "title": "image",
+          "type": "object"
+        }
+      },
+      "required": [],
+      "title": "tests",
+      "type": "object"
+    },
+    "tolerations": {
+      "description": "Tolerations for pod scheduling (templated).",
+      "items": {
+        "required": []
+      },
+      "title": "tolerations",
+      "type": "array"
+    },
+    "topologySpreadConstraints": {
+      "description": "Topology spread constraints for the pods (templated); relevant at replicaCount \u003e 1, e.g. to spread across zones.",
+      "items": {
+        "required": []
+      },
+      "title": "topologySpreadConstraints",
+      "type": "array"
+    },
+    "volumeMounts": {
+      "description": "Additional volume mounts on the echo container (templated).",
+      "items": {
+        "required": []
+      },
+      "title": "volumeMounts",
+      "type": "array"
+    },
+    "volumes": {
+      "description": "Additional volumes on the Deployment pod (templated).",
+      "items": {
+        "required": []
+      },
+      "title": "volumes",
+      "type": "array"
+    }
+  },
+  "required": [],
+  "type": "object"
+}

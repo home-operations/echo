@@ -1,0 +1,24 @@
+---
+apiVersion: v2
+name: echo
+description: An HTTP/HTTPS server that echoes each request back to the caller as JSON
+type: application
+kubeVersion: ">=1.25.0-0"
+# version + appVersion are overridden at package time: version from the release
+# tag, appVersion from the same tag (the chart deploys echo's own image).
+version: 0.0.0
+appVersion: "0.0.0"
+home: https://github.com/home-operations/echo
+sources:
+  - https://github.com/home-operations/echo
+maintainers:
+  - name: home-operations
+    email: contact@home-operations.com
+keywords:
+  - echo
+  - http
+  - debugging
+  - request-inspector
+  - kubernetes
+annotations:
+  category: Networking
