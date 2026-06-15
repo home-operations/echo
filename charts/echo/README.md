@@ -107,7 +107,7 @@ Kubernetes: `>=1.25.0-0`
 | podDisruptionBudget.maxUnavailable | string | `""` | Maximum pods that may be unavailable, as a count or percentage; takes precedence over `minAvailable` when set. @schema type: [integer, string] @schema |
 | podDisruptionBudget.minAvailable | int | `1` | Minimum pods that must stay available, as a count or percentage. Used unless `maxUnavailable` is set. @schema type: [integer, string] @schema |
 | podLabels | object | `{}` | Labels added to the pod. |
-| podSecurityContext | object | `{"runAsGroup":65532,"runAsNonRoot":true,"runAsUser":65532,"seccompProfile":{"type":"RuntimeDefault"}}` | Pod-level securityContext (runs as non-root uid/gid 65532 with the default seccomp profile). |
+| podSecurityContext | object | `{"fsGroup":65532,"runAsGroup":65532,"runAsNonRoot":true,"runAsUser":65532,"seccompProfile":{"type":"RuntimeDefault"}}` | Pod-level securityContext (runs as non-root uid/gid 65532 with the default seccomp profile). |
 | priorityClassName | string | `""` | PriorityClass for the pod (templated); empty uses the cluster default. |
 | readinessProbe | object | `{"httpGet":{"path":"/healthz","port":"http"},"initialDelaySeconds":2,"periodSeconds":10}` | Readiness probe. |
 | replicaCount | int | `1` | Number of echo replicas (echo is stateless, so it scales horizontally). Ignored when autoscaling.enabled. |
