@@ -1,0 +1,254 @@
+# Default values for echo.
+#
+# Most strings, lists, and maps below are rendered through Helm's `tpl`, so you
+# can reference release values (e.g. `{{ .Release.Name }}`) inside them.
+
+# -- Number of echo replicas (echo is stateless, so it scales horizontally). Ignored when autoscaling.enabled.
+replicaCount: 1
+
+# Horizontal Pod Autoscaler. When enabled, the Deployment omits its own replicas
+# field so the HPA owns scaling.
+autoscaling:
+  # -- Create a HorizontalPodAutoscaler (autoscaling/v2) targeting the Deployment.
+  enabled: false
+  # -- Minimum replicas.
+  minReplicas: 1
+  # -- Maximum replicas.
+  maxReplicas: 5
+  # -- Target average CPU utilization (%); 0 disables the CPU metric.
+  targetCPUUtilizationPercentage: 80
+  # -- Target average memory utilization (%); 0 disables the memory metric.
+  targetMemoryUtilizationPercentage: 0
+  # -- Scaling behavior (scaleUp/scaleDown policies, templated); empty uses the cluster defaults.
+  behavior: {}
+
+image:
+  # -- echo image repository.
+  repository: ghcr.io/home-operations/echo
+  # -- Overrides the image tag; defaults to the chart appVersion.
+  tag: ""
+  # -- Pin the image by digest (sha256:…); set by the release pipeline. When set, it overrides the tag.
+  digest: ""
+  # -- Image pull policy.
+  pullPolicy: IfNotPresent
+
+# -- Image pull secrets for private registries.
+imagePullSecrets: []
+
+# -- Override the app name used in the `app.kubernetes.io/name` label.
+nameOverride: ""
+# -- Override the generated name used for every resource's `metadata.name` (the chart "fullname").
+fullnameOverride: ""
+
+# echo's runtime configuration. Each key maps to an ECHO_* environment variable
+# the binary reads; see the README for the full reference.
+config:
+  # -- HTTP listen port (ECHO_HTTP_PORT).
+  httpPort: 8080
+  # -- Expose Prometheus metrics at /metrics on metricsPort (ECHO_METRICS_ENABLED).
+  metricsEnabled: true
+  # -- Metrics listen port; exported to the binary as ECHO_METRICS_ADDR=":<metricsPort>".
+  metricsPort: 9090
+  # -- Log level (ECHO_LOG_LEVEL): debug, info, warn, or error.
+  logLevel: info
+  # -- Log format (ECHO_LOG_FORMAT): json or text.
+  logFormat: json
+  # -- Silence the per-request access log (ECHO_DISABLE_REQUEST_LOGS); the echo response is unaffected.
+  disableRequestLogs: false
+  # -- Return the JSON document to the client (ECHO_BACK_TO_CLIENT); false replies 204 No Content.
+  echoBackToClient: true
+  # -- Maximum request body bytes read and echoed (ECHO_MAX_BODY_BYTES); larger bodies are flagged truncated.
+  maxBodyBytes: 1048576
+  # -- CIDRs whose X-Forwarded-For header is trusted for client-IP resolution (ECHO_TRUSTED_PROXIES); comma-joined into the env var.
+  trustedProxies: []
+  # -- Serve a WebSocket echo at /ws (ECHO_WS_ENABLED); non-upgrade requests to /ws fall through to the HTTP echo.
+  wsEnabled: true
+  # -- Origin host patterns allowed to open a WebSocket (ECHO_WS_ALLOWED_ORIGINS); empty allows any origin (the endpoint only echoes the caller's own frames).
+  wsAllowedOrigins: []
+  # -- Add a `kubernetes` object (pod/namespace/IP/node) to responses, injected via the Downward API (ECHO_KUBERNETES). Off by default; it reveals cluster topology to callers.
+  kubernetes: false
+
+# -- Extra environment variables for the echo container, as a map (templated).
+env: {}
+#   TZ: UTC
+# -- Extra environment variables for the echo container, as a raw list (templated).
+extraEnv: []
+# -- Sources of environment variables for the echo container (templated), e.g. a Secret with TLS material.
+envFrom: []
+
+# -- echo container resource requests/limits.
+resources: {}
+#   limits:
+#     memory: 64Mi
+#   requests:
+#     cpu: 10m
+#     memory: 32Mi
+
+serviceAccount:
+  # -- Create a ServiceAccount.
+  create: true
+  # -- ServiceAccount name; empty uses the chart fullname.
+  name: ""
+  # -- Mount the API token. echo never calls the Kubernetes API, so this is off by default.
+  automount: false
+  # -- ServiceAccount annotations.
+  annotations: {}
+
+# -- Annotations added to the Deployment (workload) metadata, e.g. `reloader.stakater.com/auto: "true"`.
+deploymentAnnotations: {}
+# -- Annotations added to the pod.
+podAnnotations: {}
+# -- Labels added to the pod.
+podLabels: {}
+
+# -- Pod-level securityContext (runs as non-root uid/gid 65532 with the default seccomp profile).
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- echo container securityContext (no privilege escalation, read-only root filesystem, drops ALL capabilities).
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# -- Liveness probe.
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 20
+# -- Readiness probe.
+readinessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  initialDelaySeconds: 2
+  periodSeconds: 10
+# -- Startup probe; gates liveness/readiness until echo is up, so a slow start can't trigger a premature restart. Set to {} to disable.
+startupProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  periodSeconds: 5
+  failureThreshold: 30
+
+service:
+  # -- Service type.
+  type: ClusterIP
+  # -- Service externalTrafficPolicy (`Local` preserves the client source IP; only applies to NodePort/LoadBalancer). Empty uses the cluster default.
+  externalTrafficPolicy: ""
+  # -- HTTP service port.
+  port: 80
+  # -- Service annotations.
+  annotations: {}
+
+monitoring:
+  serviceMonitor:
+    # -- Create a Prometheus Operator ServiceMonitor (requires its CRDs and config.metricsEnabled).
+    enabled: false
+    # -- Scrape interval.
+    interval: 30s
+    # -- Scrape timeout.
+    scrapeTimeout: 10s
+    # -- Metrics path.
+    path: /metrics
+    # -- ServiceMonitor labels.
+    labels: {}
+    # -- ServiceMonitor annotations.
+    annotations: {}
+    # -- Prometheus metric relabelings.
+    metricRelabelings: []
+    # -- Prometheus relabelings.
+    relabelings: []
+
+ingress:
+  # -- Expose echo via an Ingress.
+  enabled: false
+  # -- IngressClass name.
+  className: ""
+  # -- Ingress annotations.
+  annotations: {}
+  # -- Ingress hosts and their paths.
+  hosts:
+    - host: echo.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  # -- Ingress TLS configuration.
+  tls: []
+
+# Gateway API HTTPRoute — an alternative to `ingress` for clusters using the
+# Gateway API. Named `httpRoute` (not `route`) to avoid confusion with the
+# OpenShift Route kind.
+httpRoute:
+  # -- Expose echo via a Gateway API HTTPRoute (alternative to ingress).
+  enabled: false
+  # -- HTTPRoute apiVersion; empty defaults to gateway.networking.k8s.io/v1.
+  apiVersion: ""
+  # -- HTTPRoute kind; empty defaults to HTTPRoute.
+  kind: ""
+  # -- HTTPRoute annotations.
+  annotations: {}
+  # -- HTTPRoute labels.
+  labels: {}
+  # -- Gateways (and listeners) this route attaches to.
+  parentRefs: []
+  #  - name: gateway
+  #    namespace: gateway
+  #    sectionName: https
+  # -- Hostnames matched against the Host header (templated).
+  hostnames: []
+  #  - echo.example.com
+  # -- Match conditions for the default rule.
+  matches:
+    - path:
+        type: PathPrefix
+        value: /
+
+# -- Additional volumes on the Deployment pod (templated).
+volumes: []
+# -- Additional volume mounts on the echo container (templated).
+volumeMounts: []
+
+# -- Node selector for pod scheduling (templated).
+nodeSelector: {}
+# -- Tolerations for pod scheduling (templated).
+tolerations: []
+# -- Affinity rules for pod scheduling (templated).
+affinity: {}
+# -- Topology spread constraints for the pods (templated); relevant at replicaCount > 1, e.g. to spread across zones.
+topologySpreadConstraints: []
+# -- PriorityClass for the pod (templated); empty uses the cluster default.
+priorityClassName: ""
+# -- Grace period for a clean shutdown.
+terminationGracePeriodSeconds: 30
+
+podDisruptionBudget:
+  # -- Create a PodDisruptionBudget. Off by default; useful when running multiple replicas.
+  enabled: false
+  # -- Minimum pods that must stay available, as a count or percentage. Used unless `maxUnavailable` is set.
+  # @schema
+  # type: [integer, string]
+  # @schema
+  minAvailable: 1
+  # -- Maximum pods that may be unavailable, as a count or percentage; takes precedence over `minAvailable` when set.
+  # @schema
+  # type: [integer, string]
+  # @schema
+  maxUnavailable: ""
+
+tests:
+  image:
+    # -- `helm test` connection-pod image; a gcr-mirrored curl, so the test never pulls from Docker Hub.
+    repository: mirror.gcr.io/curlimages/curl
+    # -- `helm test` image, pinned as `tag@sha256:digest` so Renovate bumps the tag and its digest together.
+    tag: "8.11.1@sha256:c1fe1679c34d9784c1b0d1e5f62ac0a79fca01fb6377cdd33e90473c6f9f9a69"
+    # -- `helm test` image pull policy.
+    pullPolicy: IfNotPresent

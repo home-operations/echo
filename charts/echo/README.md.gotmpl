@@ -1,0 +1,44 @@
+# echo
+
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.badgesSection" . }}
+
+An HTTP/HTTPS server that echoes each incoming request back to the caller as
+JSON — a debugging aid for inspecting exactly what a client (or a proxy/ingress
+in front of it) sends. Inspired by
+[mendhak/docker-http-https-echo](https://github.com/mendhak/docker-http-https-echo).
+
+{{ template "chart.homepageLine" . }}
+
+## Installing
+
+The chart is published as a Cosign-signed OCI artifact:
+
+```bash
+helm install echo oci://ghcr.io/home-operations/charts/echo --version <version>
+```
+
+Verify the signature (keyless, GitHub Actions OIDC):
+
+```bash
+cosign verify ghcr.io/home-operations/charts/echo:<version> \
+  --certificate-identity-regexp '^https://github.com/home-operations/echo/\.github/workflows/release\.yaml@.*$' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+## Configuration
+
+echo is configured entirely through environment variables; this chart exposes
+them as the structured `config.*` values below, each mapping to an `ECHO_*`
+variable the binary reads.
+
+{{ template "chart.maintainersSection" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.valuesSection" . }}
+
+{{ template "helm-docs.versionFooter" . }}

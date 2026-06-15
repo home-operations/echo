@@ -1,0 +1,50 @@
+suite: hpa
+templates:
+  - hpa.tpl
+  - _helpers.tpl
+tests:
+  - it: is not rendered by default
+    template: hpa.tpl
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders an autoscaling/v2 HPA targeting the Deployment when enabled
+    template: hpa.tpl
+    set:
+      autoscaling.enabled: true
+      autoscaling.maxReplicas: 10
+    asserts:
+      - isKind:
+          of: HorizontalPodAutoscaler
+      - equal:
+          path: apiVersion
+          value: autoscaling/v2
+      - equal:
+          path: spec.scaleTargetRef.kind
+          value: Deployment
+      - equal:
+          path: spec.maxReplicas
+          value: 10
+      - equal:
+          path: spec.metrics[0].resource.name
+          value: cpu
+
+  - it: omits the memory metric when its target is 0
+    template: hpa.tpl
+    set:
+      autoscaling.enabled: true
+    asserts:
+      - lengthEqual:
+          path: spec.metrics
+          count: 1
+
+  - it: adds the memory metric when its target is set
+    template: hpa.tpl
+    set:
+      autoscaling.enabled: true
+      autoscaling.targetMemoryUtilizationPercentage: 75
+    asserts:
+      - lengthEqual:
+          path: spec.metrics
+          count: 2

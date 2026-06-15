@@ -1,0 +1,35 @@
+suite: poddisruptionbudget
+templates:
+  - pdb.tpl
+  - _helpers.tpl
+tests:
+  - it: is not rendered by default
+    template: pdb.tpl
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: uses minAvailable by default when enabled
+    template: pdb.tpl
+    set:
+      podDisruptionBudget.enabled: true
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: spec.minAvailable
+          value: 1
+      - notExists:
+          path: spec.maxUnavailable
+
+  - it: prefers maxUnavailable when set
+    template: pdb.tpl
+    set:
+      podDisruptionBudget.enabled: true
+      podDisruptionBudget.maxUnavailable: 1
+    asserts:
+      - equal:
+          path: spec.maxUnavailable
+          value: 1
+      - notExists:
+          path: spec.minAvailable

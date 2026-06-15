@@ -1,0 +1,176 @@
+suite: deployment
+templates:
+  - deployment.tpl
+  - _helpers.tpl
+tests:
+  - it: is an apps/v1 Deployment with a replica count
+    template: deployment.tpl
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: apiVersion
+          value: apps/v1
+      - equal:
+          path: spec.replicas
+          value: 1
+
+  - it: defaults the image to repository:appVersion
+    template: deployment.tpl
+    chart:
+      appVersion: 1.2.3
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: ghcr.io/home-operations/echo:1.2.3
+
+  - it: prefers the digest over the tag when set
+    template: deployment.tpl
+    set:
+      image.digest: sha256:deadbeef
+      image.tag: ignored
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: ghcr.io/home-operations/echo@sha256:deadbeef
+
+  - it: projects config into ECHO_* environment variables
+    template: deployment.tpl
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ECHO_HTTP_PORT
+            value: "8080"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ECHO_METRICS_ADDR
+            value: ":9090"
+
+  - it: exposes http and metrics ports by default
+    template: deployment.tpl
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: http
+            containerPort: 8080
+            protocol: TCP
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: metrics
+            containerPort: 9090
+            protocol: TCP
+
+  - it: sets resources and Deployment annotations when configured
+    template: deployment.tpl
+    set:
+      resources:
+        limits:
+          memory: 64Mi
+      deploymentAnnotations:
+        reloader.stakater.com/auto: "true"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 64Mi
+      - equal:
+          path: metadata.annotations["reloader.stakater.com/auto"]
+          value: "true"
+
+  - it: honors fullnameOverride
+    template: deployment.tpl
+    set:
+      fullnameOverride: custom
+    asserts:
+      - equal:
+          path: metadata.name
+          value: custom
+
+  - it: runs as non-root with a read-only root filesystem
+    template: deployment.tpl
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: true
+
+  - it: configures liveness, readiness, and startup probes against /healthz
+    template: deployment.tpl
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /healthz
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /healthz
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.httpGet.path
+          value: /healthz
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.failureThreshold
+          value: 30
+
+  - it: injects Downward API env when kubernetes is enabled
+    template: deployment.tpl
+    set:
+      config.kubernetes: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ECHO_KUBERNETES
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ECHO_POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ECHO_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+
+  - it: omits Downward API env by default
+    template: deployment.tpl
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ECHO_KUBERNETES
+            value: "true"
+
+  - it: sets topologySpreadConstraints when configured
+    template: deployment.tpl
+    set:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: echo
+    asserts:
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].maxSkew
+          value: 1
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].topologyKey
+          value: topology.kubernetes.io/zone
+
+  - it: omits replicas when autoscaling is enabled (HPA owns scaling)
+    template: deployment.tpl
+    set:
+      autoscaling.enabled: true
+    asserts:
+      - notExists:
+          path: spec.replicas

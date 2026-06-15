@@ -1,0 +1,58 @@
+suite: service
+templates:
+  - service.tpl
+  - _helpers.tpl
+tests:
+  - it: exposes http and metrics ports by default
+    template: service.tpl
+    asserts:
+      - isKind:
+          of: Service
+      - contains:
+          path: spec.ports
+          content:
+            name: http
+            port: 80
+            targetPort: http
+            protocol: TCP
+      - contains:
+          path: spec.ports
+          content:
+            name: metrics
+            port: 9090
+            targetPort: metrics
+            protocol: TCP
+
+  - it: omits the metrics port when metrics are disabled
+    template: service.tpl
+    set:
+      config.metricsEnabled: false
+    asserts:
+      - notContains:
+          path: spec.ports
+          content:
+            name: metrics
+            port: 9090
+            targetPort: metrics
+            protocol: TCP
+
+  - it: sets externalTrafficPolicy on a LoadBalancer service
+    template: service.tpl
+    set:
+      service.type: LoadBalancer
+      service.externalTrafficPolicy: Local
+    asserts:
+      - equal:
+          path: spec.type
+          value: LoadBalancer
+      - equal:
+          path: spec.externalTrafficPolicy
+          value: Local
+
+  - it: omits externalTrafficPolicy on a ClusterIP service
+    template: service.tpl
+    set:
+      service.externalTrafficPolicy: Local
+    asserts:
+      - notExists:
+          path: spec.externalTrafficPolicy
