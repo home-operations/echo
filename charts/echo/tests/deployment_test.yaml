@@ -47,6 +47,12 @@ tests:
           content:
             name: ECHO_METRICS_ADDR
             value: ":9090"
+      # Guard against Helm rendering the large int in scientific notation.
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ECHO_MAX_BODY_BYTES
+            value: "1048576"
 
   - it: exposes http and metrics ports by default
     template: deployment.tpl

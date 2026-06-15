@@ -90,3 +90,11 @@ jobs:
           # KUBECONFIG to later steps, so set it explicitly for the mise task.
           export KUBECONFIG="${HOME}/.kube/config"
           mise run helm-test
+
+      - name: Dump diagnostics on failure
+        if: failure()
+        run: |-
+          export KUBECONFIG="${HOME}/.kube/config"
+          kubectl get pods -n echo-e2e -o wide || true
+          kubectl describe pods -n echo-e2e || true
+          kubectl logs -n echo-e2e -l app.kubernetes.io/name=echo --all-containers --tail=80 || true

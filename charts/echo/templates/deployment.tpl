@@ -64,7 +64,7 @@ spec:
             - name: ECHO_BACK_TO_CLIENT
               value: {{ .Values.config.echoBackToClient | quote }}
             - name: ECHO_MAX_BODY_BYTES
-              value: {{ .Values.config.maxBodyBytes | quote }}
+              value: {{ .Values.config.maxBodyBytes | int64 | quote }}
             - name: ECHO_WS_ENABLED
               value: {{ .Values.config.wsEnabled | quote }}
             {{- with .Values.config.wsAllowedOrigins }}
