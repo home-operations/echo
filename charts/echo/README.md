@@ -125,7 +125,7 @@ Kubernetes: `>=1.25.0-0`
 | terminationGracePeriodSeconds | int | `30` | Grace period for a clean shutdown. |
 | tests.image.pullPolicy | string | `"IfNotPresent"` | `helm test` image pull policy. |
 | tests.image.repository | string | `"mirror.gcr.io/curlimages/curl"` | `helm test` connection-pod image; a gcr-mirrored curl, so the test never pulls from Docker Hub. |
-| tests.image.tag | string | `"8.11.1@sha256:c1fe1679c34d9784c1b0d1e5f62ac0a79fca01fb6377cdd33e90473c6f9f9a69"` | `helm test` image, pinned as `tag@sha256:digest` so Renovate bumps the tag and its digest together. |
+| tests.image.tag | string | `"8.20.0@sha256:b3f1fb2a51d923260350d21b8654bbc607164a987e2f7c84a0ac199a67df812a"` | `helm test` image, pinned as `tag@sha256:digest` so Renovate bumps the tag and its digest together. |
 | tolerations | list | `[]` | Tolerations for pod scheduling (templated). |
 | topologySpreadConstraints | list | `[]` | Topology spread constraints for the pods (templated); relevant at replicaCount > 1, e.g. to spread across zones. |
 | volumeMounts | list | `[]` | Additional volume mounts on the echo container (templated). |
