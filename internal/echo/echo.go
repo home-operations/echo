@@ -130,10 +130,8 @@ func hostnameOnly(host string) string {
 }
 
 func isJSON(contentType string) bool {
-	ct := strings.ToLower(strings.TrimSpace(contentType))
-	if i := strings.IndexByte(ct, ';'); i >= 0 {
-		ct = strings.TrimSpace(ct[:i])
-	}
+	ct, _, _ := strings.Cut(strings.ToLower(contentType), ";")
+	ct = strings.TrimSpace(ct)
 	return ct == "application/json" || strings.HasSuffix(ct, "+json")
 }
 
