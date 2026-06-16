@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.1.1](https://github.com/home-operations/echo/compare/0.1.0...0.1.1) (2026-06-16)
+
+
+### Features
+
+* **server:** log healthz/ping/metrics requests at debug level ([#12](https://github.com/home-operations/echo/issues/12)) ([b5e862a](https://github.com/home-operations/echo/commit/b5e862a4b700d228e2e1e335fd82bf471a65c1da))
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/coder/websocket (v1.8.14 → v1.8.15) ([#7](https://github.com/home-operations/echo/issues/7)) ([e87d80c](https://github.com/home-operations/echo/commit/e87d80c46b2965fb603354e5dfaa4aac81293374))
+
+
+### Miscellaneous Chores
+
+* **mise:** update tool oxfmt (0.54.0 → 0.55.0) ([#11](https://github.com/home-operations/echo/issues/11)) ([242512e](https://github.com/home-operations/echo/commit/242512ed8e6bffadbb32280efcec0d5497e63675))
+
+
+### Code Refactoring
+
+* **echo:** use strings.Cut in isJSON ([#13](https://github.com/home-operations/echo/issues/13)) ([8ef7c2d](https://github.com/home-operations/echo/commit/8ef7c2d3c6c6d9d6889e9e03d86959015f7f14e8))
+
 ## 0.1.0 (2026-06-15)
 
 
