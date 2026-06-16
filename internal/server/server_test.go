@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -114,6 +115,34 @@ func TestHealthEndpoint(t *testing.T) {
 	}
 	if doc["status"] != "ok" {
 		t.Errorf("status = %q, want ok", doc["status"])
+	}
+}
+
+func TestAccessLogLevels(t *testing.T) {
+	run := func(level slog.Level, path string) string {
+		var buf bytes.Buffer
+		cfg := baseConfig()
+		cfg.DisableRequestLogs = false
+		s := New(cfg, slog.New(slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: level})))
+		s.handler().ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, path, nil))
+		return buf.String()
+	}
+
+	// A normal request logs at info.
+	if out := run(slog.LevelInfo, "/foo"); !strings.Contains(out, `"level":"INFO"`) || !strings.Contains(out, `"path":"/foo"`) {
+		t.Errorf("a normal request should log at info, got: %s", out)
+	}
+
+	// Probe/scrape paths drop to debug — silent when the level is info.
+	for _, p := range []string{"/healthz", "/ping", "/metrics"} {
+		if out := run(slog.LevelInfo, p); strings.Contains(out, `"msg":"request"`) {
+			t.Errorf("%s should be debug-level (silent at info), got: %s", p, out)
+		}
+	}
+
+	// At debug, the probe paths are logged (at debug level).
+	if out := run(slog.LevelDebug, "/healthz"); !strings.Contains(out, `"level":"DEBUG"`) || !strings.Contains(out, `"path":"/healthz"`) {
+		t.Errorf("/healthz should log at debug, got: %s", out)
 	}
 }
 
