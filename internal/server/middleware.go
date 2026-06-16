@@ -82,6 +82,15 @@ func recoverer(log *slog.Logger) func(http.Handler) http.Handler {
 	}
 }
 
+// quietPaths are health-probe and metrics endpoints whose access log drops to
+// debug: liveness/readiness probes and Prometheus scrapes are frequent and
+// routine, so logging them at info would drown the real request log.
+var quietPaths = map[string]struct{}{
+	"/healthz": {},
+	"/ping":    {},
+	"/metrics": {},
+}
+
 // observe records Prometheus metrics and emits the per-request access log.
 func (s *Server) observe(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +105,11 @@ func (s *Server) observe(next http.Handler) http.Handler {
 		httpDuration.WithLabelValues(method).Observe(duration.Seconds())
 
 		if !s.cfg.DisableRequestLogs {
-			s.log.Info("request",
+			level := slog.LevelInfo
+			if _, quiet := quietPaths[r.URL.Path]; quiet {
+				level = slog.LevelDebug
+			}
+			s.log.Log(r.Context(), level, "request",
 				"method", r.Method,
 				"path", r.URL.Path,
 				"status", rec.status,
