@@ -162,6 +162,24 @@ func TestMetricsHandler(t *testing.T) {
 	}
 }
 
+// The monitoring listener also answers the health/readiness probe, so the
+// chart's probes can target the metrics port instead of the public echo port.
+func TestMetricsHandlerServesHealth(t *testing.T) {
+	rec := httptest.NewRecorder()
+	metricsHandler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/healthz", nil))
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	var doc map[string]string
+	if err := json.Unmarshal(rec.Body.Bytes(), &doc); err != nil {
+		t.Fatalf("health is not JSON: %v", err)
+	}
+	if doc["status"] != "ok" {
+		t.Errorf("status = %q, want ok", doc["status"])
+	}
+}
+
 func TestMethodLabelBoundsCardinality(t *testing.T) {
 	if got := methodLabel(http.MethodGet); got != http.MethodGet {
 		t.Errorf("methodLabel(GET) = %q, want GET", got)

@@ -19,9 +19,11 @@ import (
 type Config struct {
 	HTTPPort int `env:"ECHO_HTTP_PORT" envDefault:"8080"`
 
-	// MetricsEnabled exposes Prometheus metrics at /metrics on MetricsAddr.
+	// MetricsEnabled exposes Prometheus metrics at /metrics on MetricsAddr. The
+	// /healthz probe endpoint is served on this address too, so probes target the
+	// monitoring port rather than the public echo (HTTP) port.
 	MetricsEnabled bool   `env:"ECHO_METRICS_ENABLED" envDefault:"true"`
-	MetricsAddr    string `env:"ECHO_METRICS_ADDR" envDefault:":9090"`
+	MetricsAddr    string `env:"ECHO_METRICS_ADDR" envDefault:":8081"`
 
 	// LogFormat selects the slog handler: "json" (default) or "text".
 	LogFormat string `env:"ECHO_LOG_FORMAT" envDefault:"json"`

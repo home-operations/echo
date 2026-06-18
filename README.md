@@ -24,7 +24,7 @@ $ curl -s 'http://localhost:8080/hello?name=world' -d 'hi'
 
 - Any path or method is echoed as JSON.
 - `/ws` upgrades to a WebSocket and echoes each message; a plain request to `/ws` is echoed normally.
-- `/healthz` returns `{"status":"ok"}`; `/metrics` serves Prometheus metrics on `:9090`.
+- `/healthz` returns `{"status":"ok"}` and `/metrics` serves Prometheus metrics — both on the monitoring port `:8081`, separate from the echo port.
 - Plain HTTP only; terminate TLS at the ingress. `protocol` is read from `X-Forwarded-Proto`.
 - Responses are `application/json` with `X-Content-Type-Options: nosniff`. Bodies are capped (1 MiB default) and flagged when truncated.
 - The client IP is read from `X-Forwarded-For` for trusted proxies.
@@ -34,21 +34,21 @@ $ curl -s 'http://localhost:8080/hello?name=world' -d 'hi'
 
 Set via environment variables:
 
-| Variable | Default | Description |
-| --- | --- | --- |
-| `ECHO_HTTP_PORT` | `8080` | HTTP listen port |
-| `ECHO_METRICS_ENABLED` | `true` | Expose Prometheus metrics |
-| `ECHO_METRICS_ADDR` | `:9090` | Metrics listen address |
-| `ECHO_LOG_LEVEL` | `info` | `debug`, `info`, `warn`, or `error` |
-| `ECHO_LOG_FORMAT` | `json` | `json` or `text` |
-| `ECHO_DISABLE_REQUEST_LOGS` | `false` | Silence the per-request access log |
-| `ECHO_BACK_TO_CLIENT` | `true` | Return the JSON body, or `204` when false |
-| `ECHO_MAX_BODY_BYTES` | `1048576` | Max request body bytes read and echoed |
-| `ECHO_WS_ENABLED` | `true` | Serve the WebSocket echo at `/ws` |
-| `ECHO_WS_ALLOWED_ORIGINS` | _(empty)_ | Allowed WebSocket Origin host patterns (comma-separated); empty allows any |
-| `ECHO_TRUSTED_PROXIES` | _(empty)_ | Trusted-proxy CIDRs for `X-Forwarded-For` (comma-separated) |
-| `ECHO_KUBERNETES` | `false` | Add a `kubernetes` block (pod/node identity via the Downward API) |
-| `ECHO_SHUTDOWN_TIMEOUT` | `15s` | Graceful shutdown timeout |
+| Variable                    | Default   | Description                                                                |
+| --------------------------- | --------- | -------------------------------------------------------------------------- |
+| `ECHO_HTTP_PORT`            | `8080`    | HTTP listen port                                                           |
+| `ECHO_METRICS_ENABLED`      | `true`    | Expose Prometheus metrics                                                  |
+| `ECHO_METRICS_ADDR`         | `:8081`   | Monitoring listen address (serves `/metrics` and the `/healthz` probe)     |
+| `ECHO_LOG_LEVEL`            | `info`    | `debug`, `info`, `warn`, or `error`                                        |
+| `ECHO_LOG_FORMAT`           | `json`    | `json` or `text`                                                           |
+| `ECHO_DISABLE_REQUEST_LOGS` | `false`   | Silence the per-request access log                                         |
+| `ECHO_BACK_TO_CLIENT`       | `true`    | Return the JSON body, or `204` when false                                  |
+| `ECHO_MAX_BODY_BYTES`       | `1048576` | Max request body bytes read and echoed                                     |
+| `ECHO_WS_ENABLED`           | `true`    | Serve the WebSocket echo at `/ws`                                          |
+| `ECHO_WS_ALLOWED_ORIGINS`   | _(empty)_ | Allowed WebSocket Origin host patterns (comma-separated); empty allows any |
+| `ECHO_TRUSTED_PROXIES`      | _(empty)_ | Trusted-proxy CIDRs for `X-Forwarded-For` (comma-separated)                |
+| `ECHO_KUBERNETES`           | `false`   | Add a `kubernetes` block (pod/node identity via the Downward API)          |
+| `ECHO_SHUTDOWN_TIMEOUT`     | `15s`     | Graceful shutdown timeout                                                  |
 
 ## Running
 
