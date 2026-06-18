@@ -22,8 +22,9 @@ var (
 	}, []string{"method"})
 )
 
-// metricsHandler serves Prometheus metrics and its own health endpoint on the
-// dedicated metrics listener.
+// metricsHandler serves Prometheus metrics and the health/readiness probe
+// endpoint on the dedicated monitoring listener, so scraping and probing share
+// one port (8081 by default) that is separate from the public echo port.
 func metricsHandler() http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle("GET /metrics", promhttp.Handler())

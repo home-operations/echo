@@ -46,7 +46,7 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: ECHO_METRICS_ADDR
-            value: ":9090"
+            value: ":8081"
       # Guard against Helm rendering the large int in scientific notation.
       - contains:
           path: spec.template.spec.containers[0].env
@@ -67,7 +67,7 @@ tests:
           path: spec.template.spec.containers[0].ports
           content:
             name: metrics
-            containerPort: 9090
+            containerPort: 8081
             protocol: TCP
 
   - it: sets resources and Deployment annotations when configured
@@ -105,18 +105,27 @@ tests:
           path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
           value: true
 
-  - it: configures liveness, readiness, and startup probes against /healthz
+  - it: configures liveness, readiness, and startup probes against /healthz on the monitoring port
     template: deployment.tpl
     asserts:
       - equal:
           path: spec.template.spec.containers[0].livenessProbe.httpGet.path
           value: /healthz
       - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          value: metrics
+      - equal:
           path: spec.template.spec.containers[0].readinessProbe.httpGet.path
           value: /healthz
       - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: metrics
+      - equal:
           path: spec.template.spec.containers[0].startupProbe.httpGet.path
           value: /healthz
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.httpGet.port
+          value: metrics
       - equal:
           path: spec.template.spec.containers[0].startupProbe.failureThreshold
           value: 30

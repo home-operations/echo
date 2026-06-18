@@ -47,8 +47,8 @@ config:
   httpPort: 8080
   # -- Expose Prometheus metrics at /metrics on metricsPort (ECHO_METRICS_ENABLED).
   metricsEnabled: true
-  # -- Metrics listen port; exported to the binary as ECHO_METRICS_ADDR=":<metricsPort>".
-  metricsPort: 9090
+  # -- Monitoring listen port; serves both /metrics and the /healthz probe endpoint (the probes target it). Exported to the binary as ECHO_METRICS_ADDR=":<metricsPort>".
+  metricsPort: 8081
   # -- Log level (ECHO_LOG_LEVEL): debug, info, warn, or error.
   logLevel: info
   # -- Log format (ECHO_LOG_FORMAT): json or text.
@@ -118,25 +118,25 @@ securityContext:
     drop:
       - ALL
 
-# -- Liveness probe.
+# -- Liveness probe. Targets the monitoring port (metrics), which also serves /healthz.
 livenessProbe:
   httpGet:
     path: /healthz
-    port: http
+    port: metrics
   initialDelaySeconds: 5
   periodSeconds: 20
-# -- Readiness probe.
+# -- Readiness probe. Targets the monitoring port (metrics), which also serves /healthz.
 readinessProbe:
   httpGet:
     path: /healthz
-    port: http
+    port: metrics
   initialDelaySeconds: 2
   periodSeconds: 10
-# -- Startup probe; gates liveness/readiness until echo is up, so a slow start can't trigger a premature restart. Set to {} to disable.
+# -- Startup probe; gates liveness/readiness until echo is up, so a slow start can't trigger a premature restart. Targets the monitoring port (metrics). Set to {} to disable.
 startupProbe:
   httpGet:
     path: /healthz
-    port: http
+    port: metrics
   periodSeconds: 5
   failureThreshold: 30
 
