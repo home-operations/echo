@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.2](https://github.com/home-operations/echo/compare/0.1.1...0.1.2) (2026-06-18)
+
+
+### Features
+
+* serve metrics and health probes on 8081 ([#17](https://github.com/home-operations/echo/issues/17)) ([40712fd](https://github.com/home-operations/echo/commit/40712fde1866e5f15bdb753a934fff4315ad9eac))
+
+
+### Miscellaneous Chores
+
+* **mise:** update tool helm (4.2.1 → 4.2.2) ([#14](https://github.com/home-operations/echo/issues/14)) ([c4b8cbd](https://github.com/home-operations/echo/commit/c4b8cbdcf072c065e87df1ba188b96d3e0a3411b))
+
 ## [0.1.1](https://github.com/home-operations/echo/compare/0.1.0...0.1.1) (2026-06-16)
 
 
