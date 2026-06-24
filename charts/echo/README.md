@@ -56,6 +56,7 @@ Kubernetes: `>=1.25.0-0`
 | autoscaling.minReplicas | int | `1` | Minimum replicas. |
 | autoscaling.targetCPUUtilizationPercentage | int | `80` | Target average CPU utilization (%); 0 disables the CPU metric. |
 | autoscaling.targetMemoryUtilizationPercentage | int | `0` | Target average memory utilization (%); 0 disables the memory metric. |
+| config.commandsEnabled | bool | `true` | Let callers shape the response — status code, delay, extra headers — via echo-* query params / X-Echo-* headers (ECHO_COMMANDS_ENABLED). Off makes echo a pure reflector; pretty-printing stays available either way. |
 | config.disableRequestLogs | bool | `false` | Silence the per-request access log (ECHO_DISABLE_REQUEST_LOGS); the echo response is unaffected. |
 | config.echoBackToClient | bool | `true` | Return the JSON document to the client (ECHO_BACK_TO_CLIENT); false replies 204 No Content. |
 | config.httpPort | int | `8080` | HTTP listen port (ECHO_HTTP_PORT). |
@@ -63,8 +64,10 @@ Kubernetes: `>=1.25.0-0`
 | config.logFormat | string | `"json"` | Log format (ECHO_LOG_FORMAT): json or text. |
 | config.logLevel | string | `"info"` | Log level (ECHO_LOG_LEVEL): debug, info, warn, or error. |
 | config.maxBodyBytes | int | `1048576` | Maximum request body bytes read and echoed (ECHO_MAX_BODY_BYTES); larger bodies are flagged truncated. |
+| config.maxDelay | string | `"10s"` | Cap on the artificial response delay a caller may request via echo-delay (ECHO_MAX_DELAY); larger values are clamped. Keep it below the server's write timeout (~30s). |
 | config.metricsEnabled | bool | `true` | Expose Prometheus metrics at /metrics on metricsPort (ECHO_METRICS_ENABLED). |
 | config.metricsPort | int | `8081` | Monitoring listen port; serves both /metrics and the /healthz probe endpoint (the probes target it). Exported to the binary as ECHO_METRICS_ADDR=":<metricsPort>". |
+| config.prettyPrint | bool | `false` | Indent the JSON response by default (ECHO_PRETTY_PRINT); callers can still override per request with echo-pretty-print. |
 | config.trustedProxies | list | `[]` | CIDRs whose X-Forwarded-For header is trusted for client-IP resolution (ECHO_TRUSTED_PROXIES); comma-joined into the env var. |
 | config.wsAllowedOrigins | list | `[]` | Origin host patterns allowed to open a WebSocket (ECHO_WS_ALLOWED_ORIGINS); empty allows any origin (the endpoint only echoes the caller's own frames). |
 | config.wsEnabled | bool | `true` | Serve a WebSocket echo at /ws (ECHO_WS_ENABLED); non-upgrade requests to /ws fall through to the HTTP echo. |

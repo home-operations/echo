@@ -65,6 +65,12 @@ spec:
               value: {{ .Values.config.echoBackToClient | quote }}
             - name: ECHO_MAX_BODY_BYTES
               value: {{ .Values.config.maxBodyBytes | int64 | quote }}
+            - name: ECHO_COMMANDS_ENABLED
+              value: {{ .Values.config.commandsEnabled | quote }}
+            - name: ECHO_MAX_DELAY
+              value: {{ .Values.config.maxDelay | quote }}
+            - name: ECHO_PRETTY_PRINT
+              value: {{ .Values.config.prettyPrint | quote }}
             - name: ECHO_WS_ENABLED
               value: {{ .Values.config.wsEnabled | quote }}
             {{- with .Values.config.wsAllowedOrigins }}

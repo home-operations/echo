@@ -46,6 +46,9 @@ type Request struct {
 	IPs           []string            `json:"ips,omitempty"`
 	OS            OS                  `json:"os"`
 	Kubernetes    *KubernetesInfo     `json:"kubernetes,omitempty"`
+	// Applied reports the response-shaping directives (echo-code/delay/header)
+	// echo honored for this request; omitted when none applied.
+	Applied *Applied `json:"applied,omitempty"`
 }
 
 // OS describes the server process's host.
