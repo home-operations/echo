@@ -54,6 +54,12 @@
     "config": {
       "description": "echo's runtime configuration. Each key maps to an ECHO_* environment variable\nthe binary reads; see the README for the full reference.",
       "properties": {
+        "commandsEnabled": {
+          "default": true,
+          "description": "Let callers shape the response — status code, delay, extra headers — via echo-* query params / X-Echo-* headers (ECHO_COMMANDS_ENABLED). Off makes echo a pure reflector; pretty-printing stays available either way.",
+          "title": "commandsEnabled",
+          "type": "boolean"
+        },
         "disableRequestLogs": {
           "default": false,
           "description": "Silence the per-request access log (ECHO_DISABLE_REQUEST_LOGS); the echo response is unaffected.",
@@ -96,6 +102,12 @@
           "title": "maxBodyBytes",
           "type": "integer"
         },
+        "maxDelay": {
+          "default": "10s",
+          "description": "Cap on the artificial response delay a caller may request via echo-delay (ECHO_MAX_DELAY); larger values are clamped. Keep it below the server's write timeout (~30s).",
+          "title": "maxDelay",
+          "type": "string"
+        },
         "metricsEnabled": {
           "default": true,
           "description": "Expose Prometheus metrics at /metrics on metricsPort (ECHO_METRICS_ENABLED).",
@@ -107,6 +119,12 @@
           "description": "Monitoring listen port; serves both /metrics and the /healthz probe endpoint (the probes target it). Exported to the binary as ECHO_METRICS_ADDR=\":\u003cmetricsPort\u003e\".",
           "title": "metricsPort",
           "type": "integer"
+        },
+        "prettyPrint": {
+          "default": false,
+          "description": "Indent the JSON response by default (ECHO_PRETTY_PRINT); callers can still override per request with echo-pretty-print.",
+          "title": "prettyPrint",
+          "type": "boolean"
         },
         "trustedProxies": {
           "description": "CIDRs whose X-Forwarded-For header is trusted for client-IP resolution (ECHO_TRUSTED_PROXIES); comma-joined into the env var.",

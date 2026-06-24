@@ -53,6 +53,16 @@ tests:
           content:
             name: ECHO_MAX_BODY_BYTES
             value: "1048576"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ECHO_COMMANDS_ENABLED
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ECHO_MAX_DELAY
+            value: "10s"
 
   - it: exposes http and metrics ports by default
     template: deployment.tpl

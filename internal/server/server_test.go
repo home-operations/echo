@@ -29,6 +29,8 @@ func baseConfig() *config.Config {
 		DisableRequestLogs: true,
 		LogFormat:          "json",
 		WSEnabled:          true,
+		CommandsEnabled:    true,
+		MaxDelay:           10 * time.Second,
 	}
 }
 
@@ -271,4 +273,302 @@ func TestEchoOmitsKubernetesByDefault(t *testing.T) {
 	if _, ok := doc["kubernetes"]; ok {
 		t.Error("kubernetes block present by default; want omitted")
 	}
+}
+
+func TestEchoCommandStatus(t *testing.T) {
+	s := newTestServer(t, baseConfig())
+
+	t.Run("via query", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		s.handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/?echo-code=503", nil))
+		if rec.Code != http.StatusServiceUnavailable {
+			t.Fatalf("status = %d, want 503", rec.Code)
+		}
+		var doc map[string]any
+		if err := json.Unmarshal(rec.Body.Bytes(), &doc); err != nil {
+			t.Fatalf("response is not JSON: %v", err)
+		}
+		applied, ok := doc["applied"].(map[string]any)
+		if !ok || applied["status"] != float64(503) {
+			t.Errorf("applied = %v, want status 503", doc["applied"])
+		}
+	})
+
+	t.Run("via header", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set("X-Echo-Code", "418")
+		s.handler().ServeHTTP(rec, req)
+		if rec.Code != http.StatusTeapot {
+			t.Errorf("status = %d, want 418", rec.Code)
+		}
+	})
+
+	t.Run("query wins over header", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/?echo-code=503", nil)
+		req.Header.Set("X-Echo-Code", "418")
+		s.handler().ServeHTTP(rec, req)
+		if rec.Code != http.StatusServiceUnavailable {
+			t.Errorf("status = %d, want 503 (query wins)", rec.Code)
+		}
+	})
+
+	t.Run("out of range is ignored", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		s.handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/?echo-code=999", nil))
+		if rec.Code != http.StatusOK {
+			t.Errorf("status = %d, want 200 (invalid code ignored)", rec.Code)
+		}
+		var doc map[string]any
+		_ = json.Unmarshal(rec.Body.Bytes(), &doc)
+		if _, ok := doc["applied"]; ok {
+			t.Errorf("applied present for an ignored directive: %v", doc["applied"])
+		}
+	})
+}
+
+func TestEchoCommandDelay(t *testing.T) {
+	s := newTestServer(t, baseConfig())
+	rec := httptest.NewRecorder()
+
+	start := time.Now()
+	s.handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/?echo-delay=20ms", nil))
+	if elapsed := time.Since(start); elapsed < 20*time.Millisecond {
+		t.Errorf("elapsed = %v, want >= 20ms", elapsed)
+	}
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	var doc map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &doc); err != nil {
+		t.Fatalf("response is not JSON: %v", err)
+	}
+	applied, ok := doc["applied"].(map[string]any)
+	if !ok || applied["delay"] != "20ms" {
+		t.Errorf("applied = %v, want delay 20ms", doc["applied"])
+	}
+}
+
+func TestEchoCommandDelayClamped(t *testing.T) {
+	cfg := baseConfig()
+	cfg.MaxDelay = 5 * time.Millisecond
+	s := newTestServer(t, cfg)
+	rec := httptest.NewRecorder()
+
+	// Request far more delay than the cap; it must clamp and stay fast.
+	start := time.Now()
+	s.handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/?echo-delay=10s", nil))
+	if elapsed := time.Since(start); elapsed > time.Second {
+		t.Errorf("elapsed = %v, want clamped well under 1s", elapsed)
+	}
+	var doc map[string]any
+	_ = json.Unmarshal(rec.Body.Bytes(), &doc)
+	applied, _ := doc["applied"].(map[string]any)
+	if applied["delay"] != "5ms" {
+		t.Errorf("applied delay = %v, want clamped to 5ms", applied["delay"])
+	}
+}
+
+func TestEchoCommandHeaders(t *testing.T) {
+	s := newTestServer(t, baseConfig())
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/?echo-header=X-Test:1", nil)
+	req.Header.Add("X-Echo-Header", "X-Cache: HIT")
+	s.handler().ServeHTTP(rec, req)
+
+	if got := rec.Header().Get("X-Test"); got != "1" {
+		t.Errorf("X-Test = %q, want 1", got)
+	}
+	if got := rec.Header().Get("X-Cache"); got != "HIT" {
+		t.Errorf("X-Cache = %q, want HIT", got)
+	}
+	var doc map[string]any
+	_ = json.Unmarshal(rec.Body.Bytes(), &doc)
+	applied, ok := doc["applied"].(map[string]any)
+	if !ok {
+		t.Fatalf("applied missing; got %v", doc["applied"])
+	}
+	if hdrs, _ := applied["headers"].([]any); len(hdrs) != 2 {
+		t.Errorf("applied headers = %v, want 2 entries", applied["headers"])
+	}
+}
+
+func TestEchoCommandCookies(t *testing.T) {
+	s := newTestServer(t, baseConfig())
+
+	t.Run("sets response cookies and reports them", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		s.handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/?echo-cookie=session:abc&echo-cookie=theme:dark", nil))
+
+		got := map[string]string{}
+		for _, c := range rec.Result().Cookies() {
+			got[c.Name] = c.Value
+		}
+		if got["session"] != "abc" || got["theme"] != "dark" {
+			t.Errorf("Set-Cookie = %v, want session=abc and theme=dark", got)
+		}
+		var doc map[string]any
+		_ = json.Unmarshal(rec.Body.Bytes(), &doc)
+		applied, _ := doc["applied"].(map[string]any)
+		if ck, _ := applied["cookies"].([]any); len(ck) != 2 {
+			t.Errorf("applied.cookies = %v, want 2 entries", applied["cookies"])
+		}
+	})
+
+	t.Run("cookies are set even in no-body mode", func(t *testing.T) {
+		cfg := baseConfig()
+		cfg.EchoBackToClient = false
+		rec := httptest.NewRecorder()
+		newTestServer(t, cfg).handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/?echo-cookie=id:1", nil))
+		if c := rec.Result().Cookies(); len(c) != 1 || c[0].Name != "id" {
+			t.Errorf("cookies = %v, want id set on the no-body response", c)
+		}
+	})
+}
+
+func TestEchoReservedHeadersProtected(t *testing.T) {
+	s := newTestServer(t, baseConfig())
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet,
+		"/?echo-header=Cache-Control:public&echo-header=X-Content-Type-Options:off&echo-header=Content-Type:text/html&echo-header=X-Allowed:yes", nil)
+	s.handler().ServeHTTP(rec, req)
+
+	// echo's own contract/safety headers survive the override attempt...
+	if got := rec.Header().Get("Cache-Control"); got != "no-store" {
+		t.Errorf("Cache-Control = %q, want no-store (reserved)", got)
+	}
+	if got := rec.Header().Get("X-Content-Type-Options"); got != "nosniff" {
+		t.Errorf("X-Content-Type-Options = %q, want nosniff (reserved)", got)
+	}
+	if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
+		t.Errorf("Content-Type = %q, want application/json (reserved)", ct)
+	}
+	// ...but a non-reserved header still goes through, and is the only one in applied.
+	if got := rec.Header().Get("X-Allowed"); got != "yes" {
+		t.Errorf("X-Allowed = %q, want yes", got)
+	}
+	var doc map[string]any
+	_ = json.Unmarshal(rec.Body.Bytes(), &doc)
+	applied, _ := doc["applied"].(map[string]any)
+	hdrs, _ := applied["headers"].([]any)
+	if len(hdrs) != 1 || hdrs[0] != "X-Allowed" {
+		t.Errorf("applied.headers = %v, want [X-Allowed] only", applied["headers"])
+	}
+}
+
+func TestEchoAppliedOmittedWhenNoDirectives(t *testing.T) {
+	// Commands enabled but the caller asks for nothing: no applied block at all.
+	rec := httptest.NewRecorder()
+	newTestServer(t, baseConfig()).handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+	var doc map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &doc); err != nil {
+		t.Fatalf("response is not JSON: %v", err)
+	}
+	if _, ok := doc["applied"]; ok {
+		t.Errorf("applied present for a plain request: %v", doc["applied"])
+	}
+}
+
+func TestEchoCommandsDisabled(t *testing.T) {
+	cfg := baseConfig()
+	cfg.CommandsEnabled = false
+	s := newTestServer(t, cfg)
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/?echo-code=503&echo-header=X-Test:1", nil)
+	s.handler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("status = %d, want 200 (commands disabled)", rec.Code)
+	}
+	if got := rec.Header().Get("X-Test"); got != "" {
+		t.Errorf("X-Test = %q, want unset (commands disabled)", got)
+	}
+	var doc map[string]any
+	_ = json.Unmarshal(rec.Body.Bytes(), &doc)
+	if _, ok := doc["applied"]; ok {
+		t.Errorf("applied present while commands disabled: %v", doc["applied"])
+	}
+}
+
+func TestEchoCommandStatusWithBackDisabled(t *testing.T) {
+	cfg := baseConfig()
+	cfg.EchoBackToClient = false
+	s := newTestServer(t, cfg)
+
+	// No directive: still 204.
+	rec := httptest.NewRecorder()
+	s.handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+	if rec.Code != http.StatusNoContent {
+		t.Errorf("status = %d, want 204", rec.Code)
+	}
+
+	// echo-code overrides the 204 even with the body suppressed, and a caller
+	// still cannot override Content-Type (reserved) on the no-body path — while
+	// the security headers remain in place.
+	rec = httptest.NewRecorder()
+	s.handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/?echo-code=503&echo-header=Content-Type:text/html", nil))
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Errorf("status = %d, want 503", rec.Code)
+	}
+	if rec.Body.Len() != 0 {
+		t.Errorf("body = %q, want empty in no-body mode", rec.Body.String())
+	}
+	if ct := rec.Header().Get("Content-Type"); ct == "text/html" {
+		t.Errorf("Content-Type = %q, want it not overridable to text/html", ct)
+	}
+	if got := rec.Header().Get("X-Content-Type-Options"); got != "nosniff" {
+		t.Errorf("X-Content-Type-Options = %q, want nosniff even in no-body mode", got)
+	}
+}
+
+func TestEchoPrettyPrint(t *testing.T) {
+	indented := func(body string) bool { return strings.Contains(body, "\n  ") }
+
+	t.Run("compact by default", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		newTestServer(t, baseConfig()).handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+		if indented(rec.Body.String()) {
+			t.Errorf("response is indented by default: %s", rec.Body.String())
+		}
+	})
+
+	t.Run("query flag indents", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		newTestServer(t, baseConfig()).handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/?echo-pretty-print", nil))
+		if !indented(rec.Body.String()) {
+			t.Errorf("response is not indented with echo-pretty-print: %s", rec.Body.String())
+		}
+	})
+
+	t.Run("header flag indents", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set("X-Echo-Pretty-Print", "true")
+		newTestServer(t, baseConfig()).handler().ServeHTTP(rec, req)
+		if !indented(rec.Body.String()) {
+			t.Errorf("response is not indented with X-Echo-Pretty-Print: %s", rec.Body.String())
+		}
+	})
+
+	t.Run("env default indents and is always available", func(t *testing.T) {
+		cfg := baseConfig()
+		cfg.PrettyPrint = true
+		cfg.CommandsEnabled = false // pretty-print must work regardless of the commands gate
+		rec := httptest.NewRecorder()
+		newTestServer(t, cfg).handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+		if !indented(rec.Body.String()) {
+			t.Errorf("response is not indented with ECHO_PRETTY_PRINT: %s", rec.Body.String())
+		}
+	})
+
+	t.Run("query can override the env default off", func(t *testing.T) {
+		cfg := baseConfig()
+		cfg.PrettyPrint = true
+		rec := httptest.NewRecorder()
+		newTestServer(t, cfg).handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/?echo-pretty-print=false", nil))
+		if indented(rec.Body.String()) {
+			t.Errorf("echo-pretty-print=false did not turn off indentation: %s", rec.Body.String())
+		}
+	})
 }

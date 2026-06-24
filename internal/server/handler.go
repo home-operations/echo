@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -33,26 +34,87 @@ func (s *Server) handleEcho(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cmd := echo.ParseCommands(r, echo.CommandOptions{
+		Enabled:       s.cfg.CommandsEnabled,
+		MaxDelay:      s.cfg.MaxDelay,
+		DefaultPretty: s.cfg.PrettyPrint,
+	})
+
+	if !delay(r.Context(), cmd.Delay) {
+		return // client disconnected or shutdown began during the delay
+	}
+	setCustomHeaders(w, cmd.Headers)
+	for _, ck := range cmd.Cookies {
+		http.SetCookie(w, ck)
+	}
+
+	status := http.StatusOK
+	if !s.cfg.EchoBackToClient {
+		status = http.StatusNoContent
+	}
+	if cmd.Status != 0 {
+		status = cmd.Status
+	}
+
+	if !s.cfg.EchoBackToClient {
+		w.WriteHeader(status)
+		return
+	}
+
 	doc := echo.Build(r, body, truncated, echo.Options{
 		Now:            time.Now(),
 		Hostname:       s.hostname,
 		TrustedProxies: s.cfg.TrustedProxies,
 		Kubernetes:     s.k8s,
 	})
+	doc.Applied = cmd.Applied()
 
-	if !s.cfg.EchoBackToClient {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-	writeJSON(w, http.StatusOK, doc)
+	writeJSONIndent(w, status, doc, cmd.Pretty)
 }
 
-// writeJSON writes v as an application/json response. HTML escaping stays on so
-// the JSON is inert if a browser is ever pointed at it.
+// delay waits d before responding, returning early if the request context is
+// cancelled (client gone or shutdown). It reports whether to proceed with the
+// response. A non-positive d returns immediately.
+func delay(ctx context.Context, d time.Duration) bool {
+	if d <= 0 {
+		return true
+	}
+	t := time.NewTimer(d)
+	defer t.Stop()
+	select {
+	case <-t.C:
+		return true
+	case <-ctx.Done():
+		return false
+	}
+}
+
+// setCustomHeaders applies caller-requested response headers, replacing any
+// existing value (including echo's own defaults) so the caller gets exactly the
+// header they asked for. writeJSON still enforces the JSON Content-Type after.
+func setCustomHeaders(w http.ResponseWriter, h http.Header) {
+	for name, values := range h {
+		w.Header().Del(name)
+		for _, v := range values {
+			w.Header().Add(name, v)
+		}
+	}
+}
+
+// writeJSON writes v as a compact application/json response.
 func writeJSON(w http.ResponseWriter, status int, v any) {
+	writeJSONIndent(w, status, v, false)
+}
+
+// writeJSONIndent writes v as an application/json response, optionally indented.
+// HTML escaping stays on so the JSON is inert if a browser is ever pointed at it.
+func writeJSONIndent(w http.ResponseWriter, status int, v any, pretty bool) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(true)
+	if pretty {
+		enc.SetIndent("", "  ")
+	}
 	_ = enc.Encode(v)
 }

@@ -38,6 +38,21 @@ type Config struct {
 	// are clipped and flagged with bodyTruncated in the response.
 	MaxBodyBytes int64 `env:"ECHO_MAX_BODY_BYTES" envDefault:"1048576"`
 
+	// CommandsEnabled lets callers shape the response — status code, artificial
+	// delay, and extra response headers — via echo-* query parameters and
+	// X-Echo-* headers, turning the reflector into a test target for ingress,
+	// proxies, and clients. On by default (echo is a test tool); set false to
+	// make echo a pure reflector. Pretty-printing is unaffected by this gate.
+	CommandsEnabled bool `env:"ECHO_COMMANDS_ENABLED" envDefault:"true"`
+	// MaxDelay caps the artificial response delay a caller may request via
+	// echo-delay; larger requests are clamped to it. Bounds a caller's ability
+	// to tie up a connection; keep it below the server write timeout.
+	MaxDelay time.Duration `env:"ECHO_MAX_DELAY" envDefault:"10s"`
+	// PrettyPrint indents the JSON response by default. Callers can override per
+	// request with echo-pretty-print; it is always available, even when commands
+	// are disabled.
+	PrettyPrint bool `env:"ECHO_PRETTY_PRINT" envDefault:"false"`
+
 	// WSEnabled serves a WebSocket echo at /ws (non-upgrade requests to that path
 	// fall through to the normal HTTP echo).
 	WSEnabled bool `env:"ECHO_WS_ENABLED" envDefault:"true"`
@@ -104,6 +119,9 @@ func (c *Config) validate() error {
 	}
 	if c.MaxBodyBytes < 0 {
 		return fmt.Errorf("config: ECHO_MAX_BODY_BYTES must be >= 0, got %d", c.MaxBodyBytes)
+	}
+	if c.MaxDelay < 0 {
+		return fmt.Errorf("config: ECHO_MAX_DELAY must be >= 0, got %s", c.MaxDelay)
 	}
 	return nil
 }

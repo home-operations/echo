@@ -29,6 +29,15 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.MaxBodyBytes != 1<<20 {
 		t.Errorf("MaxBodyBytes = %d, want %d", cfg.MaxBodyBytes, 1<<20)
 	}
+	if !cfg.CommandsEnabled {
+		t.Error("CommandsEnabled = false, want true")
+	}
+	if cfg.MaxDelay != 10*time.Second {
+		t.Errorf("MaxDelay = %v, want 10s", cfg.MaxDelay)
+	}
+	if cfg.PrettyPrint {
+		t.Error("PrettyPrint = true, want false")
+	}
 	if cfg.ShutdownTimeout != 15*time.Second {
 		t.Errorf("ShutdownTimeout = %v, want 15s", cfg.ShutdownTimeout)
 	}
@@ -64,12 +73,14 @@ func TestLoadOverrides(t *testing.T) {
 
 func TestLoadInvalid(t *testing.T) {
 	tests := map[string]map[string]string{
-		"bad http port":     {"ECHO_HTTP_PORT": "70000"},
-		"zero http port":    {"ECHO_HTTP_PORT": "0"},
-		"bad log level":     {"ECHO_LOG_LEVEL": "loud"},
-		"bad log format":    {"ECHO_LOG_FORMAT": "xml"},
-		"bad trusted proxy": {"ECHO_TRUSTED_PROXIES": "not-a-cidr"},
-		"negative max body": {"ECHO_MAX_BODY_BYTES": "-1"},
+		"bad http port":      {"ECHO_HTTP_PORT": "70000"},
+		"zero http port":     {"ECHO_HTTP_PORT": "0"},
+		"bad log level":      {"ECHO_LOG_LEVEL": "loud"},
+		"bad log format":     {"ECHO_LOG_FORMAT": "xml"},
+		"bad trusted proxy":  {"ECHO_TRUSTED_PROXIES": "not-a-cidr"},
+		"negative max body":  {"ECHO_MAX_BODY_BYTES": "-1"},
+		"negative max delay": {"ECHO_MAX_DELAY": "-1s"},
+		"bad max delay":      {"ECHO_MAX_DELAY": "soon"},
 	}
 
 	for name, env := range tests {

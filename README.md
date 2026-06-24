@@ -29,6 +29,45 @@ $ curl -s 'http://localhost:8080/hello?name=world' -d 'hi'
 - Responses are `application/json` with `X-Content-Type-Options: nosniff`. Bodies are capped (1 MiB default) and flagged when truncated.
 - The client IP is read from `X-Forwarded-For` for trusted proxies.
 - With `ECHO_KUBERNETES=true` (chart `config.kubernetes`), adds a `kubernetes` block (pod, namespace, IP, node) from the Downward API. Off by default.
+- Callers can shape the response (status code, delay, extra headers) and pretty-print it — see below.
+
+## Shaping the response
+
+Beyond reflecting the request, a caller can tell echo how to _respond_, which
+turns it into a test target for ingress, proxies, retries, and timeouts. Each
+directive is read from an `echo-*` query parameter or the matching `X-Echo-*`
+header (the query parameter wins if both are set):
+
+| Directive       | Query / header                              | Effect                                                                      |
+| --------------- | ------------------------------------------- | --------------------------------------------------------------------------- |
+| Status code     | `echo-code` / `X-Echo-Code`                 | Respond with this status (100–599); invalid values are ignored.             |
+| Delay           | `echo-delay` / `X-Echo-Delay`               | Wait this long before responding (Go duration), capped at `ECHO_MAX_DELAY`. |
+| Response header | `echo-header` / `X-Echo-Header`             | Add a `Name: Value` response header; repeat for more than one.              |
+| Response cookie | `echo-cookie` / `X-Echo-Cookie`             | Set a `name:value` response cookie; repeat for more than one.               |
+| Pretty-print    | `echo-pretty-print` / `X-Echo-Pretty-Print` | Indent the JSON response. Always available, even when commands are off.     |
+
+```console
+$ curl -s -o /dev/null -w '%{http_code}\n' 'http://localhost:8080/?echo-code=503'
+503
+$ curl -s 'http://localhost:8080/?echo-delay=2s&echo-header=X-Test:1&echo-pretty-print'
+# ...waits 2s, sets X-Test: 1, and returns indented JSON with an "applied" block
+```
+
+The response echoes which shaping directives were honored in an `applied` block,
+so a directive that was ignored (out of range, or commands disabled) is easy to
+spot. Response shaping is gated by `ECHO_COMMANDS_ENABLED` (on by default); set
+it to `false` to make echo a pure reflector. Pretty-printing is independent and
+always available. Header names use dashes — underscored header names are
+silently dropped by some proxies (e.g. ingress-nginx).
+
+`echo-header` can set any header except echo's own `Content-Type`,
+`Content-Length`, `X-Content-Type-Options`, and `Cache-Control`, which are
+reserved so the JSON response stays coherent and inert. `echo-cookie` sets a
+bare `name=value` cookie; for attributes (`Path`, `HttpOnly`, …) use
+`echo-header=Set-Cookie:...`. Request cookies are always reflected back in the
+`cookies` field. Because `echo-delay` holds the connection open, keep
+`ECHO_MAX_DELAY` modest (or set `ECHO_COMMANDS_ENABLED=false`) when echo is
+reachable from untrusted networks, and rate-limit at the ingress.
 
 ## Configuration
 
@@ -44,6 +83,9 @@ Set via environment variables:
 | `ECHO_DISABLE_REQUEST_LOGS` | `false`   | Silence the per-request access log                                         |
 | `ECHO_BACK_TO_CLIENT`       | `true`    | Return the JSON body, or `204` when false                                  |
 | `ECHO_MAX_BODY_BYTES`       | `1048576` | Max request body bytes read and echoed                                     |
+| `ECHO_COMMANDS_ENABLED`     | `true`    | Allow callers to shape the response (`echo-*` query / `X-Echo-*` headers)  |
+| `ECHO_MAX_DELAY`            | `10s`     | Cap on the caller-requested `echo-delay`; larger values are clamped        |
+| `ECHO_PRETTY_PRINT`         | `false`   | Indent the JSON response by default (overridable with `echo-pretty-print`) |
 | `ECHO_WS_ENABLED`           | `true`    | Serve the WebSocket echo at `/ws`                                          |
 | `ECHO_WS_ALLOWED_ORIGINS`   | _(empty)_ | Allowed WebSocket Origin host patterns (comma-separated); empty allows any |
 | `ECHO_TRUSTED_PROXIES`      | _(empty)_ | Trusted-proxy CIDRs for `X-Forwarded-For` (comma-separated)                |

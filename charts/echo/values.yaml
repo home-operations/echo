@@ -59,6 +59,12 @@ config:
   echoBackToClient: true
   # -- Maximum request body bytes read and echoed (ECHO_MAX_BODY_BYTES); larger bodies are flagged truncated.
   maxBodyBytes: 1048576
+  # -- Let callers shape the response — status code, delay, extra headers — via echo-* query params / X-Echo-* headers (ECHO_COMMANDS_ENABLED). Off makes echo a pure reflector; pretty-printing stays available either way.
+  commandsEnabled: true
+  # -- Cap on the artificial response delay a caller may request via echo-delay (ECHO_MAX_DELAY); larger values are clamped. Keep it below the server's write timeout (~30s).
+  maxDelay: 10s
+  # -- Indent the JSON response by default (ECHO_PRETTY_PRINT); callers can still override per request with echo-pretty-print.
+  prettyPrint: false
   # -- CIDRs whose X-Forwarded-For header is trusted for client-IP resolution (ECHO_TRUSTED_PROXIES); comma-joined into the env var.
   trustedProxies: []
   # -- Serve a WebSocket echo at /ws (ECHO_WS_ENABLED); non-upgrade requests to /ws fall through to the HTTP echo.
