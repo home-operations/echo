@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.3](https://github.com/home-operations/echo/compare/0.1.2...0.1.3) (2026-06-24)
+
+
+### Features
+
+* caller-controlled response shaping and pretty-print ([#23](https://github.com/home-operations/echo/issues/23)) ([8507eb7](https://github.com/home-operations/echo/commit/8507eb72290282fad423f19dc7f4d4654344fce3))
+* **container:** update image mirror.gcr.io/curlimages/curl (8.20.0 → 8.21.0) ([#22](https://github.com/home-operations/echo/issues/22)) ([3bbc295](https://github.com/home-operations/echo/commit/3bbc295555ed38b7929ed6854b8edfe6ae718c73))
+
+
+### Miscellaneous Chores
+
+* **mise:** Update tool oxfmt (0.55.0 → 0.56.0) ([#20](https://github.com/home-operations/echo/issues/20)) ([231f094](https://github.com/home-operations/echo/commit/231f09430ce2f4c017c522522c0af459085260b6))
+* **mise:** Update tool zizmor (1.25.2 → 1.26.1) ([#18](https://github.com/home-operations/echo/issues/18)) ([e4ebc1a](https://github.com/home-operations/echo/commit/e4ebc1a6ea6f86bc231dde4a49b921707bc18829))
+* update Renovate configuration for Go toolchain ([71012e8](https://github.com/home-operations/echo/commit/71012e80787583e628fe25c2a01a97dd2dc70d54))
+
 ## [0.1.2](https://github.com/home-operations/echo/compare/0.1.1...0.1.2) (2026-06-18)
 
 
