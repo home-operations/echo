@@ -44,6 +44,9 @@ func (s *Server) handleEcho(w http.ResponseWriter, r *http.Request) {
 		return // client disconnected or shutdown began during the delay
 	}
 	setCustomHeaders(w, cmd.Headers)
+	for _, ck := range cmd.Cookies {
+		http.SetCookie(w, ck)
+	}
 
 	status := http.StatusOK
 	if !s.cfg.EchoBackToClient {

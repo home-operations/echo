@@ -394,6 +394,39 @@ func TestEchoCommandHeaders(t *testing.T) {
 	}
 }
 
+func TestEchoCommandCookies(t *testing.T) {
+	s := newTestServer(t, baseConfig())
+
+	t.Run("sets response cookies and reports them", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		s.handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/?echo-cookie=session:abc&echo-cookie=theme:dark", nil))
+
+		got := map[string]string{}
+		for _, c := range rec.Result().Cookies() {
+			got[c.Name] = c.Value
+		}
+		if got["session"] != "abc" || got["theme"] != "dark" {
+			t.Errorf("Set-Cookie = %v, want session=abc and theme=dark", got)
+		}
+		var doc map[string]any
+		_ = json.Unmarshal(rec.Body.Bytes(), &doc)
+		applied, _ := doc["applied"].(map[string]any)
+		if ck, _ := applied["cookies"].([]any); len(ck) != 2 {
+			t.Errorf("applied.cookies = %v, want 2 entries", applied["cookies"])
+		}
+	})
+
+	t.Run("cookies are set even in no-body mode", func(t *testing.T) {
+		cfg := baseConfig()
+		cfg.EchoBackToClient = false
+		rec := httptest.NewRecorder()
+		newTestServer(t, cfg).handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/?echo-cookie=id:1", nil))
+		if c := rec.Result().Cookies(); len(c) != 1 || c[0].Name != "id" {
+			t.Errorf("cookies = %v, want id set on the no-body response", c)
+		}
+	})
+}
+
 func TestEchoReservedHeadersProtected(t *testing.T) {
 	s := newTestServer(t, baseConfig())
 	rec := httptest.NewRecorder()

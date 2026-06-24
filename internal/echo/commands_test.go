@@ -102,6 +102,34 @@ func TestParseCommandsHeadersMergeSources(t *testing.T) {
 	}
 }
 
+func TestParseCommandsCookies(t *testing.T) {
+	c := parse(t, "/?echo-cookie=session:abc&echo-cookie=theme:dark", true, nil)
+	if len(c.Cookies) != 2 {
+		t.Fatalf("Cookies = %v, want 2", c.Cookies)
+	}
+	if c.Cookies[0].Name != "session" || c.Cookies[0].Value != "abc" {
+		t.Errorf("Cookies[0] = %+v, want session=abc", c.Cookies[0])
+	}
+	// Applied lists the cookie names, sorted.
+	if a := c.Applied(); a == nil || len(a.Cookies) != 2 || a.Cookies[0] != "session" || a.Cookies[1] != "theme" {
+		t.Errorf("Applied.Cookies = %+v, want [session theme]", a)
+	}
+
+	// The header source works too.
+	if c := parse(t, "/", true, http.Header{"X-Echo-Cookie": {"id:42"}}); len(c.Cookies) != 1 || c.Cookies[0].Value != "42" {
+		t.Errorf("header cookie = %v, want id=42", c.Cookies)
+	}
+
+	// Malformed entries and cookies that fail http.Cookie validation are
+	// dropped: no colon, an invalid name, control/CRLF or other invalid value
+	// bytes (which would enable header injection), or an empty name.
+	for _, e := range []string{"NoColon", "bad name:v", "x:has;semi", "x:a\r\nb", "x:nul\x00", ":noname"} {
+		if c := parse(t, "/", true, http.Header{"X-Echo-Cookie": {e}}); len(c.Cookies) != 0 {
+			t.Errorf("echo-cookie=%q: Cookies = %v, want none", e, c.Cookies)
+		}
+	}
+}
+
 func TestParseCommandsPretty(t *testing.T) {
 	// Bare flag (presence) => true.
 	if c := parse(t, "/?echo-pretty-print", true, nil); !c.Pretty {

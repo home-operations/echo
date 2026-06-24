@@ -22,6 +22,7 @@ const (
 	directiveCode   = "code"
 	directiveDelay  = "delay"
 	directiveHeader = "header"
+	directiveCookie = "cookie"
 	directivePretty = "pretty-print"
 )
 
@@ -47,6 +48,8 @@ type Commands struct {
 	Delay time.Duration
 	// Headers are extra response headers the caller asked echo to set.
 	Headers http.Header
+	// Cookies are response cookies the caller asked echo to set.
+	Cookies []*http.Cookie
 	// Pretty indents the JSON response.
 	Pretty bool
 }
@@ -59,6 +62,7 @@ type Applied struct {
 	Status  int      `json:"status,omitempty"`
 	Delay   string   `json:"delay,omitempty"`
 	Headers []string `json:"headers,omitempty"`
+	Cookies []string `json:"cookies,omitempty"`
 }
 
 // ParseCommands extracts the caller's response directives from the request.
@@ -94,6 +98,7 @@ func ParseCommands(r *http.Request, opts CommandOptions) Commands {
 	}
 
 	c.Headers = parseHeaders(q, r.Header)
+	c.Cookies = parseCookies(q, r.Header)
 
 	return c
 }
@@ -112,7 +117,14 @@ func (c Commands) Applied() *Applied {
 		}
 		slices.Sort(a.Headers)
 	}
-	if a.Status == 0 && a.Delay == "" && len(a.Headers) == 0 {
+	if len(c.Cookies) > 0 {
+		a.Cookies = make([]string, 0, len(c.Cookies))
+		for _, ck := range c.Cookies {
+			a.Cookies = append(a.Cookies, ck.Name)
+		}
+		slices.Sort(a.Cookies)
+	}
+	if a.Status == 0 && a.Delay == "" && len(a.Headers) == 0 && len(a.Cookies) == 0 {
 		return nil
 	}
 	return a
@@ -226,4 +238,29 @@ func validHeaderValue(s string) bool {
 	return !strings.ContainsFunc(s, func(r rune) bool {
 		return r < ' ' || r == 0x7f
 	})
+}
+
+// parseCookies collects response cookies from every echo-cookie query parameter
+// and X-Echo-Cookie request header. Each entry is "name:value" (a bare cookie,
+// no attributes — use echo-header=Set-Cookie:... for those); entries that are
+// malformed or fail http.Cookie validation are dropped. Returns nil when none
+// are valid.
+func parseCookies(q url.Values, h http.Header) []*http.Cookie {
+	raw := slices.Concat(q[queryPrefix+directiveCookie], h[textproto.CanonicalMIMEHeaderKey(headerPrefix+directiveCookie)])
+	if len(raw) == 0 {
+		return nil
+	}
+	var out []*http.Cookie
+	for _, entry := range raw {
+		name, value, ok := strings.Cut(entry, ":")
+		if !ok {
+			continue
+		}
+		ck := &http.Cookie{Name: strings.TrimSpace(name), Value: strings.TrimSpace(value)}
+		if ck.Valid() != nil {
+			continue
+		}
+		out = append(out, ck)
+	}
+	return out
 }

@@ -43,6 +43,7 @@ header (the query parameter wins if both are set):
 | Status code     | `echo-code` / `X-Echo-Code`                 | Respond with this status (100–599); invalid values are ignored.             |
 | Delay           | `echo-delay` / `X-Echo-Delay`               | Wait this long before responding (Go duration), capped at `ECHO_MAX_DELAY`. |
 | Response header | `echo-header` / `X-Echo-Header`             | Add a `Name: Value` response header; repeat for more than one.              |
+| Response cookie | `echo-cookie` / `X-Echo-Cookie`             | Set a `name:value` response cookie; repeat for more than one.               |
 | Pretty-print    | `echo-pretty-print` / `X-Echo-Pretty-Print` | Indent the JSON response. Always available, even when commands are off.     |
 
 ```console
@@ -61,10 +62,12 @@ silently dropped by some proxies (e.g. ingress-nginx).
 
 `echo-header` can set any header except echo's own `Content-Type`,
 `Content-Length`, `X-Content-Type-Options`, and `Cache-Control`, which are
-reserved so the JSON response stays coherent and inert. Because `echo-delay`
-holds the connection open, keep `ECHO_MAX_DELAY` modest (or set
-`ECHO_COMMANDS_ENABLED=false`) when echo is reachable from untrusted networks,
-and rate-limit at the ingress.
+reserved so the JSON response stays coherent and inert. `echo-cookie` sets a
+bare `name=value` cookie; for attributes (`Path`, `HttpOnly`, …) use
+`echo-header=Set-Cookie:...`. Request cookies are always reflected back in the
+`cookies` field. Because `echo-delay` holds the connection open, keep
+`ECHO_MAX_DELAY` modest (or set `ECHO_COMMANDS_ENABLED=false`) when echo is
+reachable from untrusted networks, and rate-limit at the ingress.
 
 ## Configuration
 
