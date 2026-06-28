@@ -2,13 +2,4 @@
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: ["local>home-operations/renovate-config"],
   postUpdateOptions: ["gomodTidy", "gomodUpdateImportPaths"],
-  packageRules: [
-    {
-      // The echo image is this repo's own artifact: the release pipeline pins its
-      // digest into the chart at publish time, so Renovate must not bump it here.
-      description: "echo image is pinned by CI, not Renovate",
-      matchDepNames: ["ghcr.io/home-operations/echo"],
-      enabled: false,
-    },
-  ],
 }
