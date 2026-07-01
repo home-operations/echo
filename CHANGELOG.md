@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.4](https://github.com/home-operations/echo/compare/0.1.3...0.1.4) (2026-07-01)
+
+
+### Miscellaneous Chores
+
+* **mise:** Update tool oxfmt (0.56.0 → 0.57.0) ([#27](https://github.com/home-operations/echo/issues/27)) ([50211ba](https://github.com/home-operations/echo/commit/50211ba46f7c5a1c47e3dfb8601279f7b66806f2))
+* **renovate:** inherit shared toolchain + chart-docs presets ([#24](https://github.com/home-operations/echo/issues/24)) ([4577ea0](https://github.com/home-operations/echo/commit/4577ea0a08a06899898e3b8df294c450495671b7))
+
 ## [0.1.3](https://github.com/home-operations/echo/compare/0.1.2...0.1.3) (2026-06-24)
 
 
