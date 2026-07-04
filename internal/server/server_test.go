@@ -164,14 +164,15 @@ func TestMetricsHandler(t *testing.T) {
 	}
 }
 
-// The monitoring listener also answers the health/readiness probe, so the
-// chart's probes can target the metrics port instead of the public echo port.
-func TestMetricsHandlerServesHealth(t *testing.T) {
+// Health lives on the main HTTP listener (the chart's probes target the http
+// port), NOT the optional metrics listener — so disabling metrics can never
+// break the probes.
+func TestHealthOnMainPortNotMetricsPort(t *testing.T) {
 	rec := httptest.NewRecorder()
-	metricsHandler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/healthz", nil))
-
+	newTestServer(t, baseConfig()).handler().
+		ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/healthz", nil))
 	if rec.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", rec.Code)
+		t.Fatalf("main handler /healthz status = %d, want 200", rec.Code)
 	}
 	var doc map[string]string
 	if err := json.Unmarshal(rec.Body.Bytes(), &doc); err != nil {
@@ -179,6 +180,21 @@ func TestMetricsHandlerServesHealth(t *testing.T) {
 	}
 	if doc["status"] != "ok" {
 		t.Errorf("status = %q, want ok", doc["status"])
+	}
+
+	// /readyz aliases /healthz (the pair standard) on the same main listener.
+	rec = httptest.NewRecorder()
+	newTestServer(t, baseConfig()).handler().
+		ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/readyz", nil))
+	if rec.Code != http.StatusOK {
+		t.Errorf("main handler /readyz status = %d, want 200", rec.Code)
+	}
+
+	// The metrics handler is metrics-only.
+	rec = httptest.NewRecorder()
+	metricsHandler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/healthz", nil))
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("metrics handler /healthz status = %d, want 404 (metrics-only listener)", rec.Code)
 	}
 }
 

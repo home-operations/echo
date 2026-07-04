@@ -110,13 +110,13 @@
         },
         "metricsEnabled": {
           "default": true,
-          "description": "Expose Prometheus metrics at /metrics on metricsPort (ECHO_METRICS_ENABLED).",
+          "description": "Expose Prometheus metrics at /metrics on metricsPort (ECHO_METRICS_ENABLED). Disabling removes the metrics listener, container port, Service port, and ServiceMonitor entirely; health probes are unaffected (they target the http port).",
           "title": "metricsEnabled",
           "type": "boolean"
         },
         "metricsPort": {
           "default": 8081,
-          "description": "Monitoring listen port; serves both /metrics and the /healthz probe endpoint (the probes target it). Exported to the binary as ECHO_METRICS_ADDR=\":\u003cmetricsPort\u003e\".",
+          "description": "Metrics listen port (ECHO_METRICS_PORT), kept off the public echo port.",
           "title": "metricsPort",
           "type": "integer"
         },
@@ -399,7 +399,7 @@
       "type": "object"
     },
     "livenessProbe": {
-      "description": "Liveness probe. Targets the monitoring port (metrics), which also serves /healthz.",
+      "description": "Liveness probe. Targets /healthz on the main http port, so it works regardless of the metrics toggle.",
       "properties": {
         "httpGet": {
           "properties": {
@@ -409,7 +409,7 @@
               "type": "string"
             },
             "port": {
-              "default": "metrics",
+              "default": "http",
               "title": "port",
               "type": "string"
             }
@@ -603,17 +603,17 @@
       "type": "string"
     },
     "readinessProbe": {
-      "description": "Readiness probe. Targets the monitoring port (metrics), which also serves /healthz.",
+      "description": "Readiness probe. Targets /readyz on the main http port, so it works regardless of the metrics toggle.",
       "properties": {
         "httpGet": {
           "properties": {
             "path": {
-              "default": "/healthz",
+              "default": "/readyz",
               "title": "path",
               "type": "string"
             },
             "port": {
-              "default": "metrics",
+              "default": "http",
               "title": "port",
               "type": "string"
             }
@@ -749,7 +749,7 @@
       "type": "object"
     },
     "startupProbe": {
-      "description": "Startup probe; gates liveness/readiness until echo is up, so a slow start can't trigger a premature restart. Targets the monitoring port (metrics). Set to {} to disable.",
+      "description": "Startup probe; gates liveness/readiness until echo is up, so a slow start can't trigger a premature restart. Targets the http port. Set to {} to disable.",
       "properties": {
         "failureThreshold": {
           "default": 30,
@@ -764,7 +764,7 @@
               "type": "string"
             },
             "port": {
-              "default": "metrics",
+              "default": "http",
               "title": "port",
               "type": "string"
             }

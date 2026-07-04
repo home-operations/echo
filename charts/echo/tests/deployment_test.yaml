@@ -45,8 +45,8 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: ECHO_METRICS_ADDR
-            value: ":8081"
+            name: ECHO_METRICS_PORT
+            value: "8081"
       # Guard against Helm rendering the large int in scientific notation.
       - contains:
           path: spec.template.spec.containers[0].env
@@ -115,7 +115,7 @@ tests:
           path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
           value: true
 
-  - it: configures liveness, readiness, and startup probes against /healthz on the monitoring port
+  - it: configures liveness, readiness, and startup probes against /healthz on the main http port
     template: deployment.tpl
     asserts:
       - equal:
@@ -123,22 +123,42 @@ tests:
           value: /healthz
       - equal:
           path: spec.template.spec.containers[0].livenessProbe.httpGet.port
-          value: metrics
+          value: http
       - equal:
           path: spec.template.spec.containers[0].readinessProbe.httpGet.path
-          value: /healthz
+          value: /readyz
       - equal:
           path: spec.template.spec.containers[0].readinessProbe.httpGet.port
-          value: metrics
+          value: http
       - equal:
           path: spec.template.spec.containers[0].startupProbe.httpGet.path
           value: /healthz
       - equal:
           path: spec.template.spec.containers[0].startupProbe.httpGet.port
-          value: metrics
+          value: http
       - equal:
           path: spec.template.spec.containers[0].startupProbe.failureThreshold
           value: 30
+
+  # Pins the port standard: with metrics disabled the metrics containerPort is
+  # gone but the probes (which target http) still resolve — the pod stays Ready.
+  - it: keeps probes working when metrics are disabled
+    template: deployment.tpl
+    set:
+      config.metricsEnabled: false
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: metrics
+            containerPort: 8081
+            protocol: TCP
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          value: http
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: http
 
   - it: injects Downward API env when kubernetes is enabled
     template: deployment.tpl
