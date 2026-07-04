@@ -15,10 +15,10 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.HTTPPort != 8080 {
 		t.Errorf("HTTPPort = %d, want 8080", cfg.HTTPPort)
 	}
-	// Monitoring (metrics + the /healthz probe) listens on 8081, separate from
-	// the public echo port.
-	if cfg.MetricsAddr != ":8081" {
-		t.Errorf("MetricsAddr = %q, want :8081", cfg.MetricsAddr)
+	// Metrics listen on 8081, separate from the public echo port (which also
+	// serves the /healthz probe).
+	if cfg.MetricsPort != 8081 {
+		t.Errorf("MetricsPort = %d, want 8081", cfg.MetricsPort)
 	}
 	if !cfg.EchoBackToClient {
 		t.Error("EchoBackToClient = false, want true")

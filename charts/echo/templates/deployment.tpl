@@ -53,8 +53,8 @@ spec:
               value: {{ .Values.config.httpPort | quote }}
             - name: ECHO_METRICS_ENABLED
               value: {{ .Values.config.metricsEnabled | quote }}
-            - name: ECHO_METRICS_ADDR
-              value: {{ printf ":%v" .Values.config.metricsPort | quote }}
+            - name: ECHO_METRICS_PORT
+              value: {{ .Values.config.metricsPort | quote }}
             - name: ECHO_LOG_LEVEL
               value: {{ .Values.config.logLevel | quote }}
             - name: ECHO_LOG_FORMAT

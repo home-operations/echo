@@ -19,11 +19,13 @@ import (
 type Config struct {
 	HTTPPort int `env:"ECHO_HTTP_PORT" envDefault:"8080"`
 
-	// MetricsEnabled exposes Prometheus metrics at /metrics on MetricsAddr. The
-	// /healthz probe endpoint is served on this address too, so probes target the
-	// monitoring port rather than the public echo (HTTP) port.
-	MetricsEnabled bool   `env:"ECHO_METRICS_ENABLED" envDefault:"true"`
-	MetricsAddr    string `env:"ECHO_METRICS_ADDR" envDefault:":8081"`
+	// MetricsEnabled exposes Prometheus metrics at /metrics on MetricsPort.
+	// Disabling it removes the metrics listener entirely; the /healthz probe
+	// endpoint lives on the main HTTP port and is unaffected.
+	MetricsEnabled bool `env:"ECHO_METRICS_ENABLED" envDefault:"true"`
+	// MetricsPort is bound as ":<port>" (unspecified address), so it serves
+	// IPv4-only, IPv6-only, and dual-stack clusters alike.
+	MetricsPort int `env:"ECHO_METRICS_PORT" envDefault:"8081"`
 
 	// LogFormat selects the slog handler: "json" (default) or "text".
 	LogFormat string `env:"ECHO_LOG_FORMAT" envDefault:"json"`
@@ -111,6 +113,11 @@ func Load() (*Config, error) {
 func (c *Config) validate() error {
 	if err := validatePort(c.HTTPPort, "ECHO_HTTP_PORT"); err != nil {
 		return err
+	}
+	if c.MetricsEnabled {
+		if err := validatePort(c.MetricsPort, "ECHO_METRICS_PORT"); err != nil {
+			return err
+		}
 	}
 	switch strings.ToLower(c.LogFormat) {
 	case "json", "text":

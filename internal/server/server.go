@@ -78,9 +78,12 @@ func (s *Server) Run(ctx context.Context) error {
 	httpSrv := newHTTPServer(fmt.Sprintf(":%d", s.cfg.HTTPPort), handler)
 	g.Go(func() error { return serve(httpSrv, "http", s.log) })
 
+	// The metrics listener is metrics-only and fully optional: /healthz lives on
+	// the main HTTP listener above, so disabling metrics removes this port
+	// without touching the probes.
 	var metricsSrv *http.Server
 	if s.cfg.MetricsEnabled {
-		metricsSrv = newHTTPServer(s.cfg.MetricsAddr, metricsHandler())
+		metricsSrv = newHTTPServer(fmt.Sprintf(":%d", s.cfg.MetricsPort), metricsHandler())
 		g.Go(func() error { return serve(metricsSrv, "metrics", s.log) })
 	}
 
