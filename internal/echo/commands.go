@@ -1,6 +1,7 @@
 package echo
 
 import (
+	"maps"
 	"net/http"
 	"net/textproto"
 	"net/url"
@@ -114,11 +115,7 @@ func (c Commands) Applied() *Applied {
 		a.Delay = c.Delay.String()
 	}
 	if len(c.Headers) > 0 {
-		a.Headers = make([]string, 0, len(c.Headers))
-		for name := range c.Headers {
-			a.Headers = append(a.Headers, name)
-		}
-		slices.Sort(a.Headers)
+		a.Headers = slices.Sorted(maps.Keys(c.Headers))
 	}
 	if len(c.Cookies) > 0 {
 		a.Cookies = make([]string, 0, len(c.Cookies))
@@ -169,6 +166,12 @@ func firstHeader(h http.Header, name string) (string, bool) {
 	return "", false
 }
 
+// rawDirectives collects every value of a repeatable directive from both
+// surfaces: the echo-<name> query parameters and the X-Echo-<name> headers.
+func rawDirectives(q url.Values, h http.Header, name string) []string {
+	return slices.Concat(q[queryPrefix+name], h[textproto.CanonicalMIMEHeaderKey(headerPrefix+name)])
+}
+
 // parseFlag interprets a flag value; an empty value means true (so a bare
 // ?echo-pretty-print enables it), otherwise it accepts the usual truthy spellings.
 func parseFlag(v string) bool {
@@ -197,7 +200,7 @@ var reservedHeaders = map[string]struct{}{
 // entries that are malformed, carry header-injection bytes, or target a
 // reserved header are dropped. Returns nil when none remain.
 func parseHeaders(q url.Values, h http.Header) http.Header {
-	raw := slices.Concat(q[queryPrefix+directiveHeader], h[textproto.CanonicalMIMEHeaderKey(headerPrefix+directiveHeader)])
+	raw := rawDirectives(q, h, directiveHeader)
 	if len(raw) == 0 {
 		return nil
 	}
@@ -243,11 +246,7 @@ func sanitizeSetCookie(value string) (string, bool) {
 		return "", false
 	}
 	ck.Domain = ""
-	rendered := ck.String()
-	if rendered == "" {
-		return "", false
-	}
-	return rendered, true
+	return ck.String(), true
 }
 
 // validHeaderName accepts a non-empty field name free of spaces, control
@@ -273,7 +272,7 @@ func validHeaderValue(s string) bool {
 // malformed or fail http.Cookie validation are dropped. Returns nil when none
 // are valid.
 func parseCookies(q url.Values, h http.Header) []*http.Cookie {
-	raw := slices.Concat(q[queryPrefix+directiveCookie], h[textproto.CanonicalMIMEHeaderKey(headerPrefix+directiveCookie)])
+	raw := rawDirectives(q, h, directiveCookie)
 	if len(raw) == 0 {
 		return nil
 	}

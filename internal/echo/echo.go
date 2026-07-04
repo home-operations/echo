@@ -89,7 +89,7 @@ func Build(r *http.Request, body []byte, truncated bool, opts Options) *Request 
 	// TLS-terminating proxy's X-Forwarded-Proto — gated on the peer being a
 	// trusted proxy, the same trust rule X-Forwarded-For gets.
 	protocol := "http"
-	if xfp := r.Header.Get("X-Forwarded-Proto"); xfp != "" && ipTrusted(peerHost(r.RemoteAddr), opts.TrustedProxies) {
+	if xfp := r.Header.Get("X-Forwarded-Proto"); xfp != "" && ipTrusted(hostOnly(r.RemoteAddr), opts.TrustedProxies) {
 		protocol, _, _ = strings.Cut(xfp, ",")
 		protocol = strings.TrimSpace(protocol)
 	}
@@ -99,7 +99,7 @@ func Build(r *http.Request, body []byte, truncated bool, opts Options) *Request 
 		Protocol:      protocol,
 		Method:        r.Method,
 		Host:          r.Host,
-		Hostname:      hostnameOnly(r.Host),
+		Hostname:      hostOnly(r.Host),
 		Path:          r.URL.Path,
 		URL:           r.URL.RequestURI(),
 		Query:         map[string][]string(r.URL.Query()),
@@ -126,11 +126,13 @@ func Build(r *http.Request, body []byte, truncated bool, opts Options) *Request 
 	return out
 }
 
-func hostnameOnly(host string) string {
-	if h, _, err := net.SplitHostPort(host); err == nil {
+// hostOnly strips the port from a host:port (Host header or RemoteAddr),
+// returning the input unchanged when it carries no port.
+func hostOnly(hostport string) string {
+	if h, _, err := net.SplitHostPort(hostport); err == nil {
 		return h
 	}
-	return host
+	return hostport
 }
 
 func isJSON(contentType string) bool {
@@ -155,19 +157,11 @@ func cookieMap(r *http.Request) map[string]string {
 	return out
 }
 
-// peerHost strips the port from a RemoteAddr-style host:port.
-func peerHost(remoteAddr string) string {
-	if h, _, err := net.SplitHostPort(remoteAddr); err == nil {
-		return h
-	}
-	return remoteAddr
-}
-
 // clientIP returns the best-guess client IP and the X-Forwarded-For chain. The
 // immediate peer is the client unless it is a trusted proxy, in which case the
 // right-most untrusted address in X-Forwarded-For is used.
 func clientIP(r *http.Request, trusted []netip.Prefix) (string, []string) {
-	peer := peerHost(r.RemoteAddr)
+	peer := hostOnly(r.RemoteAddr)
 
 	var chain []string
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {

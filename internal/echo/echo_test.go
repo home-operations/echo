@@ -1,6 +1,7 @@
 package echo
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
@@ -207,5 +208,38 @@ func TestReadBodyNilBody(t *testing.T) {
 	}
 	if body != nil || truncated {
 		t.Errorf("ReadBody(nil body) = (%q, %v), want (nil, false)", body, truncated)
+	}
+}
+
+func TestClientIPPeerWithoutPort(t *testing.T) {
+	// RemoteAddr without a port (no proxy in front) must pass through intact.
+	req := httptest.NewRequest(http.MethodGet, "http://x/", nil)
+	req.RemoteAddr = "203.0.113.7"
+	if ip, _ := clientIP(req, nil); ip != "203.0.113.7" {
+		t.Errorf("ip = %q, want 203.0.113.7", ip)
+	}
+}
+
+func TestClientIPNonIPChainEntry(t *testing.T) {
+	// A chain entry that isn't an IP can never be trusted, so it resolves as
+	// the right-most untrusted hop.
+	req := httptest.NewRequest(http.MethodGet, "http://x/", nil)
+	req.RemoteAddr = "10.0.0.5:1234"
+	req.Header.Set("X-Forwarded-For", "garbage")
+	ip, _ := clientIP(req, []netip.Prefix{netip.MustParsePrefix("10.0.0.0/8")})
+	if ip != "garbage" {
+		t.Errorf("ip = %q, want the untrusted literal entry", ip)
+	}
+}
+
+// errReader fails immediately, exercising ReadBody's error path.
+type errReader struct{}
+
+func (errReader) Read([]byte) (int, error) { return 0, errors.New("broken") }
+
+func TestReadBodyError(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPost, "http://x/", errReader{})
+	if _, _, err := ReadBody(req, 16); err == nil {
+		t.Error("ReadBody = nil error, want the reader's failure")
 	}
 }

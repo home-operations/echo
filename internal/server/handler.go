@@ -9,7 +9,7 @@ import (
 	"github.com/home-operations/echo/internal/echo"
 )
 
-// handler builds the request-serving chain for the HTTP and HTTPS listeners.
+// handler builds the request-serving chain for the main HTTP listener.
 // Order (outermost first): recover panics, set security headers, observe
 // (metrics + access log), then route.
 func (s *Server) handler() http.Handler {

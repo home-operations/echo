@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -612,4 +615,139 @@ func TestEchoPrettyPrint(t *testing.T) {
 			t.Errorf("echo-pretty-print=false did not turn off indentation: %s", rec.Body.String())
 		}
 	})
+}
+
+// freePort reserves an ephemeral port and releases it for the server to bind.
+func freePort(t *testing.T) int {
+	t.Helper()
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("reserve port: %v", err)
+	}
+	defer func() { _ = l.Close() }()
+	return l.Addr().(*net.TCPAddr).Port
+}
+
+// TestRunLifecycle exercises the full listener lifecycle: both listeners come
+// up, serve their endpoints, and drain cleanly on context cancellation.
+func TestRunLifecycle(t *testing.T) {
+	cfg := baseConfig()
+	cfg.HTTPPort = freePort(t)
+	cfg.MetricsEnabled = true
+	cfg.MetricsPort = freePort(t)
+	cfg.ShutdownTimeout = 5 * time.Second
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- newTestServer(t, cfg).Run(ctx) }()
+
+	get := func(port int, path string) *http.Response {
+		t.Helper()
+		var resp *http.Response
+		var err error
+		for range 100 {
+			resp, err = http.Get(fmt.Sprintf("http://127.0.0.1:%d%s", port, path))
+			if err == nil {
+				return resp
+			}
+			time.Sleep(20 * time.Millisecond)
+		}
+		t.Fatalf("GET :%d%s never succeeded: %v", port, path, err)
+		return nil
+	}
+
+	resp := get(cfg.HTTPPort, "/healthz")
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("/healthz status = %d, want 200", resp.StatusCode)
+	}
+
+	resp = get(cfg.MetricsPort, "/metrics")
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("/metrics status = %d, want 200", resp.StatusCode)
+	}
+
+	cancel()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Errorf("Run returned %v, want nil after graceful shutdown", err)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("Run did not return after cancellation")
+	}
+}
+
+func TestRunReportsBindFailure(t *testing.T) {
+	// Occupy the wildcard port so the listener fails to bind and Run surfaces
+	// the error (a loopback-only listener would not conflict on every OS).
+	l, err := net.Listen("tcp", ":0")
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	defer func() { _ = l.Close() }()
+
+	cfg := baseConfig()
+	cfg.HTTPPort = l.Addr().(*net.TCPAddr).Port
+	cfg.MetricsEnabled = false
+
+	if err := newTestServer(t, cfg).Run(context.Background()); err == nil {
+		t.Error("Run = nil, want bind error for an occupied port")
+	}
+}
+
+func TestRecovererTurnsPanicInto500(t *testing.T) {
+	h := recoverer(slog.New(slog.NewTextHandler(io.Discard, nil)))(
+		http.HandlerFunc(func(http.ResponseWriter, *http.Request) { panic("boom") }))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+	if rec.Code != http.StatusInternalServerError {
+		t.Errorf("status = %d, want 500", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), "internal server error") {
+		t.Errorf("body = %q, want the generic error document", rec.Body.String())
+	}
+}
+
+func TestNewClampsMaxDelayUnderWriteTimeout(t *testing.T) {
+	cfg := baseConfig()
+	cfg.MaxDelay = writeTimeout + time.Minute
+	newTestServer(t, cfg)
+	if cfg.MaxDelay >= writeTimeout {
+		t.Errorf("MaxDelay = %v, want clamped under the %v write timeout", cfg.MaxDelay, writeTimeout)
+	}
+}
+
+// errBody always fails, exercising the request-body read error path.
+type errBody struct{}
+
+func (errBody) Read([]byte) (int, error) { return 0, errors.New("broken body") }
+func (errBody) Close() error             { return nil }
+
+func TestEchoHandlerBodyReadError(t *testing.T) {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
+	req.Body = errBody{}
+	newTestServer(t, baseConfig()).handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want 400 for an unreadable body", rec.Code)
+	}
+}
+
+func TestEchoDelayAbortsWhenClientGone(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // the client is already gone when the delay starts
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/?echo-delay=5s", nil).WithContext(ctx)
+
+	start := time.Now()
+	newTestServer(t, baseConfig()).handler().ServeHTTP(rec, req)
+	if elapsed := time.Since(start); elapsed > time.Second {
+		t.Errorf("handler took %v, want immediate return for a cancelled context", elapsed)
+	}
+	if rec.Body.Len() != 0 {
+		t.Errorf("body = %q, want none when the delay is aborted", rec.Body.String())
+	}
 }

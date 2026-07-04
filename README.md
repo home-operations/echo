@@ -75,25 +75,25 @@ reachable from untrusted networks, and rate-limit at the ingress.
 
 Set via environment variables:
 
-| Variable                    | Default   | Description                                                                |
-| --------------------------- | --------- | -------------------------------------------------------------------------- |
-| `ECHO_HTTP_PORT`            | `8080`    | HTTP listen port (also serves the `/healthz` probe)                        |
-| `ECHO_METRICS_ENABLED`      | `true`    | Expose Prometheus metrics; disabling removes the metrics listener          |
-| `ECHO_METRICS_PORT`         | `8081`    | Metrics listen port (`/metrics` only)                                      |
-| `ECHO_LOG_LEVEL`            | `info`    | `debug`, `info`, `warn`, or `error`                                        |
-| `ECHO_LOG_FORMAT`           | `json`    | `json` or `text`                                                           |
-| `ECHO_DISABLE_REQUEST_LOGS` | `false`   | Silence the per-request access log                                         |
-| `ECHO_BACK_TO_CLIENT`       | `true`    | Return the JSON body, or `204` when false                                  |
-| `ECHO_MAX_BODY_BYTES`       | `1048576` | Max request body bytes read and echoed                                     |
-| `ECHO_COMMANDS_ENABLED`     | `true`    | Allow callers to shape the response (`echo-*` query / `X-Echo-*` headers)  |
-| `ECHO_MAX_DELAY`            | `10s`     | Cap on the caller-requested `echo-delay`; larger values are clamped        |
-| `ECHO_PRETTY_PRINT`         | `false`   | Indent the JSON response by default (overridable with `echo-pretty-print`) |
-| `ECHO_WS_ENABLED`           | `true`    | Serve the WebSocket echo at `/ws`                                          |
-| `ECHO_WS_ALLOWED_ORIGINS`   | _(empty)_ | Allowed WebSocket Origin host patterns (comma-separated); empty allows any |
-| `ECHO_WS_IDLE_TIMEOUT`      | `5m`      | Close a WebSocket that has sent nothing for this long; `0` disables        |
-| `ECHO_TRUSTED_PROXIES`      | _(empty)_ | Trusted-proxy CIDRs for `X-Forwarded-For`/`-Proto` (comma-separated)       |
-| `ECHO_KUBERNETES`           | `false`   | Add a `kubernetes` block (pod/node identity via the Downward API)          |
-| `ECHO_SHUTDOWN_TIMEOUT`     | `15s`     | Graceful shutdown timeout                                                  |
+| Variable                    | Default   | Description                                                                         |
+| --------------------------- | --------- | ----------------------------------------------------------------------------------- |
+| `ECHO_HTTP_PORT`            | `8080`    | HTTP listen port (also serves the `/healthz` probe)                                 |
+| `ECHO_METRICS_ENABLED`      | `true`    | Expose Prometheus metrics; disabling removes the metrics listener                   |
+| `ECHO_METRICS_PORT`         | `8081`    | Metrics listen port (`/metrics` only)                                               |
+| `ECHO_LOG_LEVEL`            | `info`    | `debug`, `info`, `warn`, or `error`                                                 |
+| `ECHO_LOG_FORMAT`           | `json`    | `json` or `text`                                                                    |
+| `ECHO_DISABLE_REQUEST_LOGS` | `false`   | Silence the per-request access log                                                  |
+| `ECHO_BACK_TO_CLIENT`       | `true`    | Return the JSON body, or `204` when false                                           |
+| `ECHO_MAX_BODY_BYTES`       | `1048576` | Max request body bytes read and echoed                                              |
+| `ECHO_COMMANDS_ENABLED`     | `true`    | Allow callers to shape the response (`echo-*` query / `X-Echo-*` headers)           |
+| `ECHO_MAX_DELAY`            | `10s`     | Cap on the caller-requested `echo-delay`; itself capped under the 30s write timeout |
+| `ECHO_PRETTY_PRINT`         | `false`   | Indent the JSON response by default (overridable with `echo-pretty-print`)          |
+| `ECHO_WS_ENABLED`           | `true`    | Serve the WebSocket echo at `/ws`                                                   |
+| `ECHO_WS_ALLOWED_ORIGINS`   | _(empty)_ | Allowed WebSocket Origin host patterns (comma-separated); empty allows any          |
+| `ECHO_WS_IDLE_TIMEOUT`      | `5m`      | Close a WebSocket that has sent nothing for this long; `0` disables                 |
+| `ECHO_TRUSTED_PROXIES`      | _(empty)_ | Trusted-proxy CIDRs for `X-Forwarded-For`/`-Proto` (comma-separated)                |
+| `ECHO_KUBERNETES`           | `false`   | Add a `kubernetes` block (pod/node identity via the Downward API)                   |
+| `ECHO_SHUTDOWN_TIMEOUT`     | `15s`     | Graceful shutdown timeout                                                           |
 
 ## Running
 

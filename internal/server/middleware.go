@@ -1,10 +1,7 @@
 package server
 
 import (
-	"bufio"
-	"errors"
 	"log/slog"
-	"net"
 	"net/http"
 	"runtime/debug"
 	"time"
@@ -35,26 +32,10 @@ func (r *statusRecorder) Write(b []byte) (int, error) {
 	return r.ResponseWriter.Write(b)
 }
 
-// Unwrap exposes the wrapped ResponseWriter so http.ResponseController and code
-// that needs the original (e.g. for connection deadlines) can reach it.
+// Unwrap exposes the wrapped ResponseWriter. http.ResponseController and
+// coder/websocket both walk Unwrap to reach the real Flusher/Hijacker, so no
+// explicit forwarding methods are needed here.
 func (r *statusRecorder) Unwrap() http.ResponseWriter { return r.ResponseWriter }
-
-// Hijack forwards to the underlying ResponseWriter so WebSocket upgrades work
-// through this wrapper.
-func (r *statusRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	h, ok := r.ResponseWriter.(http.Hijacker)
-	if !ok {
-		return nil, nil, errors.New("server: underlying ResponseWriter is not an http.Hijacker")
-	}
-	return h.Hijack()
-}
-
-// Flush forwards to the underlying ResponseWriter when it supports flushing.
-func (r *statusRecorder) Flush() {
-	if f, ok := r.ResponseWriter.(http.Flusher); ok {
-		f.Flush()
-	}
-}
 
 // securityHeaders sets headers that make the echoed JSON inert in a browser:
 // nosniff stops content-type guessing, and responses are never cached.

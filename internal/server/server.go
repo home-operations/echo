@@ -1,5 +1,5 @@
-// Package server wires echo's HTTP, HTTPS, and metrics listeners together and
-// manages their lifecycle.
+// Package server wires echo's HTTP and metrics listeners together and manages
+// their lifecycle.
 package server
 
 import (

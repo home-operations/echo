@@ -218,3 +218,10 @@ func TestAppliedSummary(t *testing.T) {
 		t.Errorf("Applied.Headers = %v, want sorted [X-One X-Two]", a.Headers)
 	}
 }
+
+func TestParseCommandsHeaderOnlyDirective(t *testing.T) {
+	// A directive supplied only via its X-Echo-* header (no query form).
+	if c := parse(t, "/", true, http.Header{"X-Echo-Code": {"418"}}); c.Status != 418 {
+		t.Errorf("Status = %d, want 418 from the header surface", c.Status)
+	}
+}
