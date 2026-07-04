@@ -62,6 +62,10 @@ type Config struct {
 	// patterns). Empty allows any origin — safe here because the endpoint only
 	// echoes the caller's own frames.
 	WSAllowedOrigins []string `env:"ECHO_WS_ALLOWED_ORIGINS" envSeparator:","`
+	// WSIdleTimeout closes a WebSocket that has sent nothing for this long, so
+	// silent or half-open clients cannot hold connections forever. 0 disables
+	// the idle limit.
+	WSIdleTimeout time.Duration `env:"ECHO_WS_IDLE_TIMEOUT" envDefault:"5m"`
 
 	// Kubernetes adds a kubernetes object (pod/node identity from the Downward
 	// API env below) to the response. Off by default.
@@ -118,6 +122,9 @@ func (c *Config) validate() error {
 		if err := validatePort(c.MetricsPort, "ECHO_METRICS_PORT"); err != nil {
 			return err
 		}
+		if c.MetricsPort == c.HTTPPort {
+			return fmt.Errorf("config: ECHO_METRICS_PORT and ECHO_HTTP_PORT are both %d; they must differ", c.HTTPPort)
+		}
 	}
 	switch strings.ToLower(c.LogFormat) {
 	case "json", "text":
@@ -129,6 +136,9 @@ func (c *Config) validate() error {
 	}
 	if c.MaxDelay < 0 {
 		return fmt.Errorf("config: ECHO_MAX_DELAY must be >= 0, got %s", c.MaxDelay)
+	}
+	if c.WSIdleTimeout < 0 {
+		return fmt.Errorf("config: ECHO_WS_IDLE_TIMEOUT must be >= 0, got %s", c.WSIdleTimeout)
 	}
 	return nil
 }

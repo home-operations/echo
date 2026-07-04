@@ -16,7 +16,13 @@ func TestBuild(t *testing.T) {
 	req.AddCookie(&http.Cookie{Name: "session", Value: "abc"})
 	req.Header.Set("X-Forwarded-Proto", "https")
 
-	got := Build(req, body, false, Options{Now: time.Unix(0, 0), Hostname: "test-host"})
+	// X-Forwarded-Proto is only honored from a trusted proxy; httptest requests
+	// arrive from 192.0.2.1.
+	got := Build(req, body, false, Options{
+		Now:            time.Unix(0, 0),
+		Hostname:       "test-host",
+		TrustedProxies: []netip.Prefix{netip.MustParsePrefix("192.0.2.0/24")},
+	})
 
 	if got.Method != http.MethodPost {
 		t.Errorf("Method = %q, want POST", got.Method)
@@ -47,6 +53,16 @@ func TestBuild(t *testing.T) {
 	}
 	if got.OS.Hostname != "test-host" {
 		t.Errorf("OS.Hostname = %q, want test-host", got.OS.Hostname)
+	}
+}
+
+func TestBuildProtocolUntrustedPeer(t *testing.T) {
+	// Without a trusted proxy, X-Forwarded-Proto is attacker-controlled and
+	// ignored, matching the X-Forwarded-For trust rule.
+	req := httptest.NewRequest(http.MethodGet, "http://x/", nil)
+	req.Header.Set("X-Forwarded-Proto", "https")
+	if got := Build(req, nil, false, Options{Now: time.Unix(0, 0)}); got.Protocol != "http" {
+		t.Errorf("Protocol = %q, want http (XFP from untrusted peer)", got.Protocol)
 	}
 }
 

@@ -35,6 +35,9 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.MaxDelay != 10*time.Second {
 		t.Errorf("MaxDelay = %v, want 10s", cfg.MaxDelay)
 	}
+	if cfg.WSIdleTimeout != 5*time.Minute {
+		t.Errorf("WSIdleTimeout = %v, want 5m", cfg.WSIdleTimeout)
+	}
 	if cfg.PrettyPrint {
 		t.Error("PrettyPrint = true, want false")
 	}
@@ -73,14 +76,16 @@ func TestLoadOverrides(t *testing.T) {
 
 func TestLoadInvalid(t *testing.T) {
 	tests := map[string]map[string]string{
-		"bad http port":      {"ECHO_HTTP_PORT": "70000"},
-		"zero http port":     {"ECHO_HTTP_PORT": "0"},
-		"bad log level":      {"ECHO_LOG_LEVEL": "loud"},
-		"bad log format":     {"ECHO_LOG_FORMAT": "xml"},
-		"bad trusted proxy":  {"ECHO_TRUSTED_PROXIES": "not-a-cidr"},
-		"negative max body":  {"ECHO_MAX_BODY_BYTES": "-1"},
-		"negative max delay": {"ECHO_MAX_DELAY": "-1s"},
-		"bad max delay":      {"ECHO_MAX_DELAY": "soon"},
+		"bad http port":                        {"ECHO_HTTP_PORT": "70000"},
+		"zero http port":                       {"ECHO_HTTP_PORT": "0"},
+		"bad log level":                        {"ECHO_LOG_LEVEL": "loud"},
+		"bad log format":                       {"ECHO_LOG_FORMAT": "xml"},
+		"bad trusted proxy":                    {"ECHO_TRUSTED_PROXIES": "not-a-cidr"},
+		"negative max body":                    {"ECHO_MAX_BODY_BYTES": "-1"},
+		"negative max delay":                   {"ECHO_MAX_DELAY": "-1s"},
+		"bad max delay":                        {"ECHO_MAX_DELAY": "soon"},
+		"negative ws idle":                     {"ECHO_WS_IDLE_TIMEOUT": "-1s"},
+		"metrics port collides with http port": {"ECHO_METRICS_PORT": "8080"},
 	}
 
 	for name, env := range tests {

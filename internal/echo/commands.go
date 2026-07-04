@@ -80,8 +80,11 @@ func ParseCommands(r *http.Request, opts CommandOptions) Commands {
 		return c
 	}
 
+	// 1xx is excluded: WriteHeader(1xx) sends an informational response and the
+	// JSON body then triggers an implicit 200, so the client would see two
+	// status lines while metrics and the applied summary report the first.
 	if raw, ok := directive(q, r.Header, directiveCode); ok {
-		if code, err := strconv.Atoi(raw); err == nil && code >= 100 && code <= 599 {
+		if code, err := strconv.Atoi(raw); err == nil && code >= 200 && code <= 599 {
 			c.Status = code
 		}
 	}
@@ -215,12 +218,36 @@ func parseHeaders(q url.Values, h http.Header) http.Header {
 		if _, reserved := reservedHeaders[name]; reserved {
 			continue
 		}
+		if name == "Set-Cookie" {
+			value, ok = sanitizeSetCookie(value)
+			if !ok {
+				continue
+			}
+		}
 		out.Add(name, value)
 	}
 	if len(out) == 0 {
 		return nil
 	}
 	return out
+}
+
+// sanitizeSetCookie re-renders a caller-supplied Set-Cookie value with the
+// Domain attribute removed. A Domain-scoped cookie set from echo's hostname
+// would also reach every sibling app under a shared parent domain (session
+// fixation); every other attribute only affects echo's own origin. Malformed
+// values are rejected.
+func sanitizeSetCookie(value string) (string, bool) {
+	ck, err := http.ParseSetCookie(value)
+	if err != nil {
+		return "", false
+	}
+	ck.Domain = ""
+	rendered := ck.String()
+	if rendered == "" {
+		return "", false
+	}
+	return rendered, true
 }
 
 // validHeaderName accepts a non-empty field name free of spaces, control

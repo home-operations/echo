@@ -65,6 +65,16 @@ func New(cfg *config.Config, log *slog.Logger) *Server {
 		}
 	}
 
+	// A delay that outlives the write timeout would run the response into an
+	// already-expired deadline and the client would see a reset instead of a
+	// slow reply, so cap it just under.
+	if cfg.MaxDelay >= writeTimeout {
+		clamped := writeTimeout - time.Second
+		log.Warn("ECHO_MAX_DELAY exceeds the server write timeout; clamping",
+			"configured", cfg.MaxDelay, "clamped", clamped)
+		cfg.MaxDelay = clamped
+	}
+
 	return &Server{cfg: cfg, log: log, hostname: host, k8s: k8s}
 }
 

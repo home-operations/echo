@@ -82,13 +82,13 @@ func recoverer(log *slog.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-// quietPaths are health-probe and metrics endpoints whose access log drops to
-// debug: liveness/readiness probes and Prometheus scrapes are frequent and
-// routine, so logging them at info would drown the real request log.
+// quietPaths are the health-probe endpoints whose access log drops to debug:
+// liveness/readiness probes are frequent and routine, so logging them at info
+// would drown the real request log. (/metrics needs no entry — it lives on the
+// separate metrics listener, outside this middleware.)
 var quietPaths = map[string]struct{}{
 	"/healthz": {},
-	"/ping":    {},
-	"/metrics": {},
+	"/readyz":  {},
 }
 
 // observe records Prometheus metrics and emits the per-request access log.
@@ -102,7 +102,12 @@ func (s *Server) observe(next http.Handler) http.Handler {
 		duration := time.Since(start)
 		method := methodLabel(r.Method)
 		httpRequests.WithLabelValues(method, statusClass(rec.status)).Inc()
-		httpDuration.WithLabelValues(method).Observe(duration.Seconds())
+		// A 101 response means the connection was hijacked for a WebSocket:
+		// duration is the whole session, not a request latency, and one
+		// long-lived session would bury every real sample in the histogram.
+		if rec.status != http.StatusSwitchingProtocols {
+			httpDuration.WithLabelValues(method).Observe(duration.Seconds())
+		}
 
 		if !s.cfg.DisableRequestLogs {
 			level := slog.LevelInfo

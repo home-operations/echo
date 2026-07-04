@@ -135,8 +135,8 @@ func TestAccessLogLevels(t *testing.T) {
 		t.Errorf("a normal request should log at info, got: %s", out)
 	}
 
-	// Probe/scrape paths drop to debug — silent when the level is info.
-	for _, p := range []string{"/healthz", "/ping", "/metrics"} {
+	// Probe paths drop to debug — silent when the level is info.
+	for _, p := range []string{"/healthz", "/readyz"} {
 		if out := run(slog.LevelInfo, p); strings.Contains(out, `"msg":"request"`) {
 			t.Errorf("%s should be debug-level (silent at info), got: %s", p, out)
 		}
@@ -239,6 +239,31 @@ func TestWebSocketEcho(t *testing.T) {
 		t.Errorf("echo = (%v, %q), want (text, ping)", typ, data)
 	}
 	_ = conn.Close(websocket.StatusNormalClosure, "")
+}
+
+func TestWebSocketIdleTimeout(t *testing.T) {
+	cfg := baseConfig()
+	cfg.WSIdleTimeout = 100 * time.Millisecond
+	srv := httptest.NewServer(newTestServer(t, cfg).handler())
+	defer srv.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	conn, _, err := websocket.Dial(ctx, "ws"+strings.TrimPrefix(srv.URL, "http")+"/ws", nil)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	defer func() { _ = conn.CloseNow() }()
+
+	// Send nothing: the server must close the connection once the idle window
+	// lapses, so this read returns an error well before the test context expires.
+	if _, _, err := conn.Read(ctx); err == nil {
+		t.Fatal("read succeeded, want connection closed by server idle timeout")
+	}
+	if ctx.Err() != nil {
+		t.Fatal("test context expired first: server did not enforce the idle timeout")
+	}
 }
 
 func TestWebSocketDisabledFallsThroughToEcho(t *testing.T) {
