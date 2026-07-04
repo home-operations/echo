@@ -24,7 +24,7 @@ $ curl -s 'http://localhost:8080/hello?name=world' -d 'hi'
 
 - Any path or method is echoed as JSON.
 - `/ws` upgrades to a WebSocket and echoes each message; a plain request to `/ws` is echoed normally.
-- `/healthz` returns `{"status":"ok"}` on the main echo port; `/metrics` serves Prometheus metrics on its own optional port (`:8081`), separate from the echo port.
+- `/healthz` (liveness) and `/readyz` (readiness) return `{"status":"ok"}` on the main echo port; `/metrics` serves Prometheus metrics on its own optional port (`:8081`), separate from the echo port.
 - Plain HTTP only; terminate TLS at the ingress. `protocol` is read from `X-Forwarded-Proto`.
 - Responses are `application/json` with `X-Content-Type-Options: nosniff`. Bodies are capped (1 MiB default) and flagged when truncated.
 - The client IP is read from `X-Forwarded-For` for trusted proxies.

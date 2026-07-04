@@ -112,7 +112,7 @@ Kubernetes: `>=1.25.0-0`
 | podLabels | object | `{}` | Labels added to the pod. |
 | podSecurityContext | object | `{"fsGroup":65532,"runAsGroup":65532,"runAsNonRoot":true,"runAsUser":65532,"seccompProfile":{"type":"RuntimeDefault"}}` | Pod-level securityContext (runs as non-root uid/gid 65532 with the default seccomp profile). |
 | priorityClassName | string | `""` | PriorityClass for the pod (templated); empty uses the cluster default. |
-| readinessProbe | object | `{"httpGet":{"path":"/healthz","port":"http"},"initialDelaySeconds":2,"periodSeconds":10}` | Readiness probe. Targets /healthz on the main http port, so it works regardless of the metrics toggle. |
+| readinessProbe | object | `{"httpGet":{"path":"/readyz","port":"http"},"initialDelaySeconds":2,"periodSeconds":10}` | Readiness probe. Targets /readyz on the main http port, so it works regardless of the metrics toggle. |
 | replicaCount | int | `1` | Number of echo replicas (echo is stateless, so it scales horizontally). Ignored when autoscaling.enabled. |
 | resources | object | `{}` | echo container resource requests/limits. |
 | securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true}` | echo container securityContext (no privilege escalation, read-only root filesystem, drops ALL capabilities). |

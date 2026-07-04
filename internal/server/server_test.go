@@ -182,6 +182,14 @@ func TestHealthOnMainPortNotMetricsPort(t *testing.T) {
 		t.Errorf("status = %q, want ok", doc["status"])
 	}
 
+	// /readyz aliases /healthz (the pair standard) on the same main listener.
+	rec = httptest.NewRecorder()
+	newTestServer(t, baseConfig()).handler().
+		ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/readyz", nil))
+	if rec.Code != http.StatusOK {
+		t.Errorf("main handler /readyz status = %d, want 200", rec.Code)
+	}
+
 	// The metrics handler is metrics-only.
 	rec = httptest.NewRecorder()
 	metricsHandler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/healthz", nil))

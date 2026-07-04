@@ -131,10 +131,10 @@ livenessProbe:
     port: http
   initialDelaySeconds: 5
   periodSeconds: 20
-# -- Readiness probe. Targets /healthz on the main http port, so it works regardless of the metrics toggle.
+# -- Readiness probe. Targets /readyz on the main http port, so it works regardless of the metrics toggle.
 readinessProbe:
   httpGet:
-    path: /healthz
+    path: /readyz
     port: http
   initialDelaySeconds: 2
   periodSeconds: 10

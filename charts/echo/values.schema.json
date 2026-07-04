@@ -603,12 +603,12 @@
       "type": "string"
     },
     "readinessProbe": {
-      "description": "Readiness probe. Targets /healthz on the main http port, so it works regardless of the metrics toggle.",
+      "description": "Readiness probe. Targets /readyz on the main http port, so it works regardless of the metrics toggle.",
       "properties": {
         "httpGet": {
           "properties": {
             "path": {
-              "default": "/healthz",
+              "default": "/readyz",
               "title": "path",
               "type": "string"
             },

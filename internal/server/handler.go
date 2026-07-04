@@ -14,7 +14,12 @@ import (
 // (metrics + access log), then route.
 func (s *Server) handler() http.Handler {
 	mux := http.NewServeMux()
+	// The org pair standard: /healthz = liveness (cheap, no dependencies),
+	// /readyz = readiness. echo has no serving condition beyond being up, so
+	// readyz aliases healthz — the endpoint exists so probes and external
+	// configs never need to change if that ever stops being true.
 	mux.HandleFunc("GET /healthz", handleHealth)
+	mux.HandleFunc("GET /readyz", handleHealth)
 	if s.cfg.WSEnabled {
 		mux.HandleFunc("GET /ws", s.handleWebSocket)
 	}
