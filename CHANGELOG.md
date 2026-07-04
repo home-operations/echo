@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/home-operations/echo/compare/0.2.0...0.2.1) (2026-07-04)
+
+
+### Bug Fixes
+
+* review findings — probe log spam, 1xx echo-code, Set-Cookie domain scoping, WS idle bound ([#29](https://github.com/home-operations/echo/issues/29)) ([699e4d1](https://github.com/home-operations/echo/commit/699e4d1f8c7f320b8ad248dbaddea7171c1b531c))
+
 ## [0.2.0](https://github.com/home-operations/echo/compare/0.1.3...0.2.0) (2026-07-04)
 
 
