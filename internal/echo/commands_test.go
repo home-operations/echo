@@ -3,6 +3,7 @@ package echo
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -24,8 +25,9 @@ func TestParseCommandsStatus(t *testing.T) {
 	if c := parse(t, "/?echo-code=%20503%20", true, nil); c.Status != 503 {
 		t.Errorf("padded echo-code: Status = %d, want 503", c.Status)
 	}
-	// Out of range and non-numeric are ignored.
-	for _, code := range []string{"99", "600", "abc", "200.5"} {
+	// Out of range (including 1xx, which would double-respond) and non-numeric
+	// are ignored.
+	for _, code := range []string{"99", "100", "199", "600", "abc", "200.5"} {
 		if c := parse(t, "/?echo-code="+code, true, nil); c.Status != 0 {
 			t.Errorf("echo-code=%s: Status = %d, want 0 (ignored)", code, c.Status)
 		}
@@ -78,6 +80,32 @@ func TestParseCommandsHeaders(t *testing.T) {
 		if len(c.Headers) != 0 {
 			t.Errorf("echo-header=%q: Headers = %v, want none", h, c.Headers)
 		}
+	}
+}
+
+func TestParseCommandsSetCookieDomainStripped(t *testing.T) {
+	// Set-Cookie via echo-header keeps its attributes except Domain, which
+	// would scope the cookie to a shared parent domain (session fixation).
+	// Exercised via the header surface: Go's url.ParseQuery rejects the
+	// semicolons a Set-Cookie value carries.
+	c := parse(t, "/", true, http.Header{
+		"X-Echo-Header": {"Set-Cookie:sess=x; Domain=example.com; Path=/; HttpOnly"},
+	})
+	got := c.Headers.Get("Set-Cookie")
+	if got == "" {
+		t.Fatal("Set-Cookie dropped entirely, want Domain-stripped value")
+	}
+	if strings.Contains(strings.ToLower(got), "domain=") {
+		t.Errorf("Set-Cookie = %q, want Domain attribute stripped", got)
+	}
+	if !strings.Contains(got, "Path=/") || !strings.Contains(got, "HttpOnly") {
+		t.Errorf("Set-Cookie = %q, want other attributes preserved", got)
+	}
+
+	// A malformed Set-Cookie value is dropped.
+	c = parse(t, "/", true, http.Header{"X-Echo-Header": {"Set-Cookie:"}})
+	if got := c.Headers.Get("Set-Cookie"); got != "" {
+		t.Errorf("malformed Set-Cookie = %q, want dropped", got)
 	}
 }
 
@@ -188,5 +216,12 @@ func TestAppliedSummary(t *testing.T) {
 	// Header names are sorted for a stable response.
 	if len(a.Headers) != 2 || a.Headers[0] != "X-One" || a.Headers[1] != "X-Two" {
 		t.Errorf("Applied.Headers = %v, want sorted [X-One X-Two]", a.Headers)
+	}
+}
+
+func TestParseCommandsHeaderOnlyDirective(t *testing.T) {
+	// A directive supplied only via its X-Echo-* header (no query form).
+	if c := parse(t, "/", true, http.Header{"X-Echo-Code": {"418"}}); c.Status != 418 {
+		t.Errorf("Status = %d, want 418 from the header surface", c.Status)
 	}
 }

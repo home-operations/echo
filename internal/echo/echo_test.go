@@ -1,6 +1,7 @@
 package echo
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
@@ -16,7 +17,13 @@ func TestBuild(t *testing.T) {
 	req.AddCookie(&http.Cookie{Name: "session", Value: "abc"})
 	req.Header.Set("X-Forwarded-Proto", "https")
 
-	got := Build(req, body, false, Options{Now: time.Unix(0, 0), Hostname: "test-host"})
+	// X-Forwarded-Proto is only honored from a trusted proxy; httptest requests
+	// arrive from 192.0.2.1.
+	got := Build(req, body, false, Options{
+		Now:            time.Unix(0, 0),
+		Hostname:       "test-host",
+		TrustedProxies: []netip.Prefix{netip.MustParsePrefix("192.0.2.0/24")},
+	})
 
 	if got.Method != http.MethodPost {
 		t.Errorf("Method = %q, want POST", got.Method)
@@ -47,6 +54,16 @@ func TestBuild(t *testing.T) {
 	}
 	if got.OS.Hostname != "test-host" {
 		t.Errorf("OS.Hostname = %q, want test-host", got.OS.Hostname)
+	}
+}
+
+func TestBuildProtocolUntrustedPeer(t *testing.T) {
+	// Without a trusted proxy, X-Forwarded-Proto is attacker-controlled and
+	// ignored, matching the X-Forwarded-For trust rule.
+	req := httptest.NewRequest(http.MethodGet, "http://x/", nil)
+	req.Header.Set("X-Forwarded-Proto", "https")
+	if got := Build(req, nil, false, Options{Now: time.Unix(0, 0)}); got.Protocol != "http" {
+		t.Errorf("Protocol = %q, want http (XFP from untrusted peer)", got.Protocol)
 	}
 }
 
@@ -191,5 +208,38 @@ func TestReadBodyNilBody(t *testing.T) {
 	}
 	if body != nil || truncated {
 		t.Errorf("ReadBody(nil body) = (%q, %v), want (nil, false)", body, truncated)
+	}
+}
+
+func TestClientIPPeerWithoutPort(t *testing.T) {
+	// RemoteAddr without a port (no proxy in front) must pass through intact.
+	req := httptest.NewRequest(http.MethodGet, "http://x/", nil)
+	req.RemoteAddr = "203.0.113.7"
+	if ip, _ := clientIP(req, nil); ip != "203.0.113.7" {
+		t.Errorf("ip = %q, want 203.0.113.7", ip)
+	}
+}
+
+func TestClientIPNonIPChainEntry(t *testing.T) {
+	// A chain entry that isn't an IP can never be trusted, so it resolves as
+	// the right-most untrusted hop.
+	req := httptest.NewRequest(http.MethodGet, "http://x/", nil)
+	req.RemoteAddr = "10.0.0.5:1234"
+	req.Header.Set("X-Forwarded-For", "garbage")
+	ip, _ := clientIP(req, []netip.Prefix{netip.MustParsePrefix("10.0.0.0/8")})
+	if ip != "garbage" {
+		t.Errorf("ip = %q, want the untrusted literal entry", ip)
+	}
+}
+
+// errReader fails immediately, exercising ReadBody's error path.
+type errReader struct{}
+
+func (errReader) Read([]byte) (int, error) { return 0, errors.New("broken") }
+
+func TestReadBodyError(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPost, "http://x/", errReader{})
+	if _, _, err := ReadBody(req, 16); err == nil {
+		t.Error("ReadBody = nil error, want the reader's failure")
 	}
 }

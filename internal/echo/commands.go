@@ -1,6 +1,7 @@
 package echo
 
 import (
+	"maps"
 	"net/http"
 	"net/textproto"
 	"net/url"
@@ -80,8 +81,11 @@ func ParseCommands(r *http.Request, opts CommandOptions) Commands {
 		return c
 	}
 
+	// 1xx is excluded: WriteHeader(1xx) sends an informational response and the
+	// JSON body then triggers an implicit 200, so the client would see two
+	// status lines while metrics and the applied summary report the first.
 	if raw, ok := directive(q, r.Header, directiveCode); ok {
-		if code, err := strconv.Atoi(raw); err == nil && code >= 100 && code <= 599 {
+		if code, err := strconv.Atoi(raw); err == nil && code >= 200 && code <= 599 {
 			c.Status = code
 		}
 	}
@@ -111,11 +115,7 @@ func (c Commands) Applied() *Applied {
 		a.Delay = c.Delay.String()
 	}
 	if len(c.Headers) > 0 {
-		a.Headers = make([]string, 0, len(c.Headers))
-		for name := range c.Headers {
-			a.Headers = append(a.Headers, name)
-		}
-		slices.Sort(a.Headers)
+		a.Headers = slices.Sorted(maps.Keys(c.Headers))
 	}
 	if len(c.Cookies) > 0 {
 		a.Cookies = make([]string, 0, len(c.Cookies))
@@ -166,6 +166,12 @@ func firstHeader(h http.Header, name string) (string, bool) {
 	return "", false
 }
 
+// rawDirectives collects every value of a repeatable directive from both
+// surfaces: the echo-<name> query parameters and the X-Echo-<name> headers.
+func rawDirectives(q url.Values, h http.Header, name string) []string {
+	return slices.Concat(q[queryPrefix+name], h[textproto.CanonicalMIMEHeaderKey(headerPrefix+name)])
+}
+
 // parseFlag interprets a flag value; an empty value means true (so a bare
 // ?echo-pretty-print enables it), otherwise it accepts the usual truthy spellings.
 func parseFlag(v string) bool {
@@ -194,7 +200,7 @@ var reservedHeaders = map[string]struct{}{
 // entries that are malformed, carry header-injection bytes, or target a
 // reserved header are dropped. Returns nil when none remain.
 func parseHeaders(q url.Values, h http.Header) http.Header {
-	raw := slices.Concat(q[queryPrefix+directiveHeader], h[textproto.CanonicalMIMEHeaderKey(headerPrefix+directiveHeader)])
+	raw := rawDirectives(q, h, directiveHeader)
 	if len(raw) == 0 {
 		return nil
 	}
@@ -215,12 +221,32 @@ func parseHeaders(q url.Values, h http.Header) http.Header {
 		if _, reserved := reservedHeaders[name]; reserved {
 			continue
 		}
+		if name == "Set-Cookie" {
+			value, ok = sanitizeSetCookie(value)
+			if !ok {
+				continue
+			}
+		}
 		out.Add(name, value)
 	}
 	if len(out) == 0 {
 		return nil
 	}
 	return out
+}
+
+// sanitizeSetCookie re-renders a caller-supplied Set-Cookie value with the
+// Domain attribute removed. A Domain-scoped cookie set from echo's hostname
+// would also reach every sibling app under a shared parent domain (session
+// fixation); every other attribute only affects echo's own origin. Malformed
+// values are rejected.
+func sanitizeSetCookie(value string) (string, bool) {
+	ck, err := http.ParseSetCookie(value)
+	if err != nil {
+		return "", false
+	}
+	ck.Domain = ""
+	return ck.String(), true
 }
 
 // validHeaderName accepts a non-empty field name free of spaces, control
@@ -246,7 +272,7 @@ func validHeaderValue(s string) bool {
 // malformed or fail http.Cookie validation are dropped. Returns nil when none
 // are valid.
 func parseCookies(q url.Values, h http.Header) []*http.Cookie {
-	raw := slices.Concat(q[queryPrefix+directiveCookie], h[textproto.CanonicalMIMEHeaderKey(headerPrefix+directiveCookie)])
+	raw := rawDirectives(q, h, directiveCookie)
 	if len(raw) == 0 {
 		return nil
 	}

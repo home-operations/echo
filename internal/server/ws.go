@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"time"
@@ -38,14 +39,32 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	for {
-		typ, data, err := conn.Read(ctx)
+		typ, data, err := readWithIdleTimeout(ctx, conn, s.cfg.WSIdleTimeout)
 		if err != nil {
-			return // normal close, context cancellation, or client gone
+			return // normal close, idle timeout, context cancellation, or client gone
 		}
 		if err := conn.Write(ctx, typ, data); err != nil {
 			return
 		}
 	}
+}
+
+// readWithIdleTimeout reads the next message, giving up after idle so a silent
+// or half-open client can't hold the connection (and its goroutine) forever.
+// The library replies to pings internally during the wait, but a ping is
+// client-initiated liveness, not activity — only a real message resets the
+// clock. idle <= 0 waits indefinitely.
+func readWithIdleTimeout(ctx context.Context, conn *websocket.Conn, idle time.Duration) (websocket.MessageType, []byte, error) {
+	if idle > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, idle)
+		defer cancel()
+	}
+	typ, data, err := conn.Read(ctx)
+	if err != nil && ctx.Err() != nil {
+		_ = conn.Close(websocket.StatusGoingAway, "idle timeout")
+	}
+	return typ, data, err
 }
 
 func isWebSocketUpgrade(r *http.Request) bool {

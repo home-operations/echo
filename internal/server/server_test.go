@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -135,8 +138,8 @@ func TestAccessLogLevels(t *testing.T) {
 		t.Errorf("a normal request should log at info, got: %s", out)
 	}
 
-	// Probe/scrape paths drop to debug — silent when the level is info.
-	for _, p := range []string{"/healthz", "/ping", "/metrics"} {
+	// Probe paths drop to debug — silent when the level is info.
+	for _, p := range []string{"/healthz", "/readyz"} {
 		if out := run(slog.LevelInfo, p); strings.Contains(out, `"msg":"request"`) {
 			t.Errorf("%s should be debug-level (silent at info), got: %s", p, out)
 		}
@@ -239,6 +242,31 @@ func TestWebSocketEcho(t *testing.T) {
 		t.Errorf("echo = (%v, %q), want (text, ping)", typ, data)
 	}
 	_ = conn.Close(websocket.StatusNormalClosure, "")
+}
+
+func TestWebSocketIdleTimeout(t *testing.T) {
+	cfg := baseConfig()
+	cfg.WSIdleTimeout = 100 * time.Millisecond
+	srv := httptest.NewServer(newTestServer(t, cfg).handler())
+	defer srv.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	conn, _, err := websocket.Dial(ctx, "ws"+strings.TrimPrefix(srv.URL, "http")+"/ws", nil)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	defer func() { _ = conn.CloseNow() }()
+
+	// Send nothing: the server must close the connection once the idle window
+	// lapses, so this read returns an error well before the test context expires.
+	if _, _, err := conn.Read(ctx); err == nil {
+		t.Fatal("read succeeded, want connection closed by server idle timeout")
+	}
+	if ctx.Err() != nil {
+		t.Fatal("test context expired first: server did not enforce the idle timeout")
+	}
 }
 
 func TestWebSocketDisabledFallsThroughToEcho(t *testing.T) {
@@ -587,4 +615,139 @@ func TestEchoPrettyPrint(t *testing.T) {
 			t.Errorf("echo-pretty-print=false did not turn off indentation: %s", rec.Body.String())
 		}
 	})
+}
+
+// freePort reserves an ephemeral port and releases it for the server to bind.
+func freePort(t *testing.T) int {
+	t.Helper()
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("reserve port: %v", err)
+	}
+	defer func() { _ = l.Close() }()
+	return l.Addr().(*net.TCPAddr).Port
+}
+
+// TestRunLifecycle exercises the full listener lifecycle: both listeners come
+// up, serve their endpoints, and drain cleanly on context cancellation.
+func TestRunLifecycle(t *testing.T) {
+	cfg := baseConfig()
+	cfg.HTTPPort = freePort(t)
+	cfg.MetricsEnabled = true
+	cfg.MetricsPort = freePort(t)
+	cfg.ShutdownTimeout = 5 * time.Second
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- newTestServer(t, cfg).Run(ctx) }()
+
+	get := func(port int, path string) *http.Response {
+		t.Helper()
+		var resp *http.Response
+		var err error
+		for range 100 {
+			resp, err = http.Get(fmt.Sprintf("http://127.0.0.1:%d%s", port, path))
+			if err == nil {
+				return resp
+			}
+			time.Sleep(20 * time.Millisecond)
+		}
+		t.Fatalf("GET :%d%s never succeeded: %v", port, path, err)
+		return nil
+	}
+
+	resp := get(cfg.HTTPPort, "/healthz")
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("/healthz status = %d, want 200", resp.StatusCode)
+	}
+
+	resp = get(cfg.MetricsPort, "/metrics")
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("/metrics status = %d, want 200", resp.StatusCode)
+	}
+
+	cancel()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Errorf("Run returned %v, want nil after graceful shutdown", err)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("Run did not return after cancellation")
+	}
+}
+
+func TestRunReportsBindFailure(t *testing.T) {
+	// Occupy the wildcard port so the listener fails to bind and Run surfaces
+	// the error (a loopback-only listener would not conflict on every OS).
+	l, err := net.Listen("tcp", ":0")
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	defer func() { _ = l.Close() }()
+
+	cfg := baseConfig()
+	cfg.HTTPPort = l.Addr().(*net.TCPAddr).Port
+	cfg.MetricsEnabled = false
+
+	if err := newTestServer(t, cfg).Run(context.Background()); err == nil {
+		t.Error("Run = nil, want bind error for an occupied port")
+	}
+}
+
+func TestRecovererTurnsPanicInto500(t *testing.T) {
+	h := recoverer(slog.New(slog.NewTextHandler(io.Discard, nil)))(
+		http.HandlerFunc(func(http.ResponseWriter, *http.Request) { panic("boom") }))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+	if rec.Code != http.StatusInternalServerError {
+		t.Errorf("status = %d, want 500", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), "internal server error") {
+		t.Errorf("body = %q, want the generic error document", rec.Body.String())
+	}
+}
+
+func TestNewClampsMaxDelayUnderWriteTimeout(t *testing.T) {
+	cfg := baseConfig()
+	cfg.MaxDelay = writeTimeout + time.Minute
+	newTestServer(t, cfg)
+	if cfg.MaxDelay >= writeTimeout {
+		t.Errorf("MaxDelay = %v, want clamped under the %v write timeout", cfg.MaxDelay, writeTimeout)
+	}
+}
+
+// errBody always fails, exercising the request-body read error path.
+type errBody struct{}
+
+func (errBody) Read([]byte) (int, error) { return 0, errors.New("broken body") }
+func (errBody) Close() error             { return nil }
+
+func TestEchoHandlerBodyReadError(t *testing.T) {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
+	req.Body = errBody{}
+	newTestServer(t, baseConfig()).handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want 400 for an unreadable body", rec.Code)
+	}
+}
+
+func TestEchoDelayAbortsWhenClientGone(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // the client is already gone when the delay starts
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/?echo-delay=5s", nil).WithContext(ctx)
+
+	start := time.Now()
+	newTestServer(t, baseConfig()).handler().ServeHTTP(rec, req)
+	if elapsed := time.Since(start); elapsed > time.Second {
+		t.Errorf("handler took %v, want immediate return for a cancelled context", elapsed)
+	}
+	if rec.Body.Len() != 0 {
+		t.Errorf("body = %q, want none when the delay is aborted", rec.Body.String())
+	}
 }

@@ -25,7 +25,7 @@ $ curl -s 'http://localhost:8080/hello?name=world' -d 'hi'
 - Any path or method is echoed as JSON.
 - `/ws` upgrades to a WebSocket and echoes each message; a plain request to `/ws` is echoed normally.
 - `/healthz` (liveness) and `/readyz` (readiness) return `{"status":"ok"}` on the main echo port; `/metrics` serves Prometheus metrics on its own optional port (`:8081`), separate from the echo port.
-- Plain HTTP only; terminate TLS at the ingress. `protocol` is read from `X-Forwarded-Proto`.
+- Plain HTTP only; terminate TLS at the ingress. `protocol` is read from `X-Forwarded-Proto` when the peer is a trusted proxy.
 - Responses are `application/json` with `X-Content-Type-Options: nosniff`. Bodies are capped (1 MiB default) and flagged when truncated.
 - The client IP is read from `X-Forwarded-For` for trusted proxies.
 - With `ECHO_KUBERNETES=true` (chart `config.kubernetes`), adds a `kubernetes` block (pod, namespace, IP, node) from the Downward API. Off by default.
@@ -40,7 +40,7 @@ header (the query parameter wins if both are set):
 
 | Directive       | Query / header                              | Effect                                                                      |
 | --------------- | ------------------------------------------- | --------------------------------------------------------------------------- |
-| Status code     | `echo-code` / `X-Echo-Code`                 | Respond with this status (100–599); invalid values are ignored.             |
+| Status code     | `echo-code` / `X-Echo-Code`                 | Respond with this status (200–599); invalid values are ignored.             |
 | Delay           | `echo-delay` / `X-Echo-Delay`               | Wait this long before responding (Go duration), capped at `ECHO_MAX_DELAY`. |
 | Response header | `echo-header` / `X-Echo-Header`             | Add a `Name: Value` response header; repeat for more than one.              |
 | Response cookie | `echo-cookie` / `X-Echo-Cookie`             | Set a `name:value` response cookie; repeat for more than one.               |
@@ -64,7 +64,9 @@ silently dropped by some proxies (e.g. ingress-nginx).
 `Content-Length`, `X-Content-Type-Options`, and `Cache-Control`, which are
 reserved so the JSON response stays coherent and inert. `echo-cookie` sets a
 bare `name=value` cookie; for attributes (`Path`, `HttpOnly`, …) use
-`echo-header=Set-Cookie:...`. Request cookies are always reflected back in the
+`echo-header=Set-Cookie:...` — the `Domain` attribute is stripped so a cookie
+cannot be scoped to a shared parent domain. Request cookies are always
+reflected back in the
 `cookies` field. Because `echo-delay` holds the connection open, keep
 `ECHO_MAX_DELAY` modest (or set `ECHO_COMMANDS_ENABLED=false`) when echo is
 reachable from untrusted networks, and rate-limit at the ingress.
@@ -73,24 +75,25 @@ reachable from untrusted networks, and rate-limit at the ingress.
 
 Set via environment variables:
 
-| Variable                    | Default   | Description                                                                |
-| --------------------------- | --------- | -------------------------------------------------------------------------- |
-| `ECHO_HTTP_PORT`            | `8080`    | HTTP listen port (also serves the `/healthz` probe)                        |
-| `ECHO_METRICS_ENABLED`      | `true`    | Expose Prometheus metrics; disabling removes the metrics listener          |
-| `ECHO_METRICS_PORT`         | `8081`    | Metrics listen port (`/metrics` only)                                      |
-| `ECHO_LOG_LEVEL`            | `info`    | `debug`, `info`, `warn`, or `error`                                        |
-| `ECHO_LOG_FORMAT`           | `json`    | `json` or `text`                                                           |
-| `ECHO_DISABLE_REQUEST_LOGS` | `false`   | Silence the per-request access log                                         |
-| `ECHO_BACK_TO_CLIENT`       | `true`    | Return the JSON body, or `204` when false                                  |
-| `ECHO_MAX_BODY_BYTES`       | `1048576` | Max request body bytes read and echoed                                     |
-| `ECHO_COMMANDS_ENABLED`     | `true`    | Allow callers to shape the response (`echo-*` query / `X-Echo-*` headers)  |
-| `ECHO_MAX_DELAY`            | `10s`     | Cap on the caller-requested `echo-delay`; larger values are clamped        |
-| `ECHO_PRETTY_PRINT`         | `false`   | Indent the JSON response by default (overridable with `echo-pretty-print`) |
-| `ECHO_WS_ENABLED`           | `true`    | Serve the WebSocket echo at `/ws`                                          |
-| `ECHO_WS_ALLOWED_ORIGINS`   | _(empty)_ | Allowed WebSocket Origin host patterns (comma-separated); empty allows any |
-| `ECHO_TRUSTED_PROXIES`      | _(empty)_ | Trusted-proxy CIDRs for `X-Forwarded-For` (comma-separated)                |
-| `ECHO_KUBERNETES`           | `false`   | Add a `kubernetes` block (pod/node identity via the Downward API)          |
-| `ECHO_SHUTDOWN_TIMEOUT`     | `15s`     | Graceful shutdown timeout                                                  |
+| Variable                    | Default   | Description                                                                         |
+| --------------------------- | --------- | ----------------------------------------------------------------------------------- |
+| `ECHO_HTTP_PORT`            | `8080`    | HTTP listen port (also serves the `/healthz` probe)                                 |
+| `ECHO_METRICS_ENABLED`      | `true`    | Expose Prometheus metrics; disabling removes the metrics listener                   |
+| `ECHO_METRICS_PORT`         | `8081`    | Metrics listen port (`/metrics` only)                                               |
+| `ECHO_LOG_LEVEL`            | `info`    | `debug`, `info`, `warn`, or `error`                                                 |
+| `ECHO_LOG_FORMAT`           | `json`    | `json` or `text`                                                                    |
+| `ECHO_DISABLE_REQUEST_LOGS` | `false`   | Silence the per-request access log                                                  |
+| `ECHO_BACK_TO_CLIENT`       | `true`    | Return the JSON body, or `204` when false                                           |
+| `ECHO_MAX_BODY_BYTES`       | `1048576` | Max request body bytes read and echoed                                              |
+| `ECHO_COMMANDS_ENABLED`     | `true`    | Allow callers to shape the response (`echo-*` query / `X-Echo-*` headers)           |
+| `ECHO_MAX_DELAY`            | `10s`     | Cap on the caller-requested `echo-delay`; itself capped under the 30s write timeout |
+| `ECHO_PRETTY_PRINT`         | `false`   | Indent the JSON response by default (overridable with `echo-pretty-print`)          |
+| `ECHO_WS_ENABLED`           | `true`    | Serve the WebSocket echo at `/ws`                                                   |
+| `ECHO_WS_ALLOWED_ORIGINS`   | _(empty)_ | Allowed WebSocket Origin host patterns (comma-separated); empty allows any          |
+| `ECHO_WS_IDLE_TIMEOUT`      | `5m`      | Close a WebSocket that has sent nothing for this long; `0` disables                 |
+| `ECHO_TRUSTED_PROXIES`      | _(empty)_ | Trusted-proxy CIDRs for `X-Forwarded-For`/`-Proto` (comma-separated)                |
+| `ECHO_KUBERNETES`           | `false`   | Add a `kubernetes` block (pod/node identity via the Downward API)                   |
+| `ECHO_SHUTDOWN_TIMEOUT`     | `15s`     | Graceful shutdown timeout                                                           |
 
 ## Running
 
