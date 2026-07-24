@@ -4,10 +4,11 @@ name: echo
 description: An HTTP/HTTPS server that echoes each request back to the caller as JSON
 type: application
 kubeVersion: ">=1.25.0-0"
-# version + appVersion are overridden at package time: version from the release
-# tag, appVersion from the same tag (the chart deploys echo's own image).
-version: 0.0.0
-appVersion: "0.0.0"
+# release-please stamps both on release (the chart deploys echo's own image, so
+# they track the same tag). The release workflow re-stamps at package time; these
+# keep the committed copy from going stale.
+version: 0.2.1 # x-release-please-version
+appVersion: "0.2.1" # x-release-please-version
 home: https://github.com/home-operations/echo
 sources:
   - https://github.com/home-operations/echo
