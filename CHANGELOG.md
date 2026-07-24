@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.2.2](https://github.com/home-operations/echo/compare/0.2.1...0.2.2) (2026-07-24)
+
+
+### Features
+
+* **deps:** update module github.com/prometheus/client_golang (v1.23.2 → v1.24.0) ([#41](https://github.com/home-operations/echo/issues/41)) ([a26d502](https://github.com/home-operations/echo/commit/a26d502719e30a218041f4fe6c1f90db81d7d868))
+* **deps:** update module golang.org/x/sync (v0.21.0 → v0.22.0) ([#34](https://github.com/home-operations/echo/issues/34)) ([c04c282](https://github.com/home-operations/echo/commit/c04c28296cca3e86322f281a30cdd27470bb77b9))
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/prometheus/client_golang (v1.24.0 → v1.24.1) ([#45](https://github.com/home-operations/echo/issues/45)) ([495cc58](https://github.com/home-operations/echo/commit/495cc58cfe6dd65a4c648fb129067f9ea91715e3))
+
+
+### Styles
+
+* indent markdown at 2 to match embedded yaml ([#42](https://github.com/home-operations/echo/issues/42)) ([71318c2](https://github.com/home-operations/echo/commit/71318c27f92677821c96d80173c5ba7161dfedf0))
+
+
+### Miscellaneous Chores
+
+* **mise:** Update tool cosign (3.1.1 → 3.1.2) ([#40](https://github.com/home-operations/echo/issues/40)) ([0f0c7a6](https://github.com/home-operations/echo/commit/0f0c7a6f0538e20e554f9f7647a63095012363b7))
+* **mise:** Update tool go (1.26.4 → 1.26.5) ([#35](https://github.com/home-operations/echo/issues/35)) ([a31848d](https://github.com/home-operations/echo/commit/a31848d80523c7ea6a84197d4033dc659e223c40))
+* **mise:** Update tool helm (4.2.2 → 4.2.3) ([#36](https://github.com/home-operations/echo/issues/36)) ([ff36c16](https://github.com/home-operations/echo/commit/ff36c162ac1f62c230f2509baa0f963747e2a25b))
+* **mise:** Update tool lefthook (2.1.9 → 2.1.10) ([#33](https://github.com/home-operations/echo/issues/33)) ([a2b1dda](https://github.com/home-operations/echo/commit/a2b1dda9a217e09d54eaca6353d07eb7cb4affcc))
+* **mise:** Update tool oxfmt (0.57.0 → 0.58.0) ([#31](https://github.com/home-operations/echo/issues/31)) ([193a734](https://github.com/home-operations/echo/commit/193a734c1e9fb1afaa0a65ee619d8bb50dcd7c5c))
+* **mise:** Update tool oxfmt (0.58.0 → 0.59.0) ([#37](https://github.com/home-operations/echo/issues/37)) ([ce34281](https://github.com/home-operations/echo/commit/ce342816d23581d13aaddae55ce326ab55eb5cb7))
+* **mise:** Update tool oxfmt (0.59.0 → 0.60.0) ([#44](https://github.com/home-operations/echo/issues/44)) ([15b9b71](https://github.com/home-operations/echo/commit/15b9b711b6ff490b691192a9eef8cb0cbfe5266a))
+* **mise:** Update tool zizmor (1.26.1 → 1.27.0) ([#38](https://github.com/home-operations/echo/issues/38)) ([872f91b](https://github.com/home-operations/echo/commit/872f91b45fabbfacb739e4260c6150cecea9453f))
+* **mise:** Update tool zizmor (1.27.0 → 1.28.0) ([#43](https://github.com/home-operations/echo/issues/43)) ([7ede577](https://github.com/home-operations/echo/commit/7ede577f6c9409915816148a07c18344869be7f3))
+
 ## [0.2.1](https://github.com/home-operations/echo/compare/0.2.0...0.2.1) (2026-07-04)
 
 
