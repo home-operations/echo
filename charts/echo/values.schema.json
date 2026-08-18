@@ -174,7 +174,7 @@
       "type": "array"
     },
     "extraEnv": {
-      "description": "  TZ: UTC\nExtra environment variables for the echo container, as a raw list (templated).",
+      "description": "Extra environment variables for the echo container, as a raw list (templated).",
       "items": {
         "required": []
       },
@@ -215,7 +215,7 @@
           "type": "boolean"
         },
         "hostnames": {
-          "description": " - name: gateway\n   namespace: gateway\n   sectionName: https\nHostnames matched against the Host header (templated).",
+          "description": "Hostnames matched against the Host header (templated).",
           "items": {
             "required": []
           },
@@ -235,7 +235,7 @@
           "type": "object"
         },
         "matches": {
-          "description": " - echo.example.com\nMatch conditions for the default rule.",
+          "description": "Match conditions for the default rule.",
           "items": {
             "anyOf": [
               {

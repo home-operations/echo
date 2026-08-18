@@ -77,6 +77,7 @@ config:
 # -- Extra environment variables for the echo container, as a map (templated).
 env: {}
 #   TZ: UTC
+
 # -- Extra environment variables for the echo container, as a raw list (templated).
 extraEnv: []
 # -- Sources of environment variables for the echo container (templated), e.g. a Secret with TLS material.
@@ -210,9 +211,11 @@ httpRoute:
   #  - name: gateway
   #    namespace: gateway
   #    sectionName: https
+
   # -- Hostnames matched against the Host header (templated).
   hostnames: []
   #  - echo.example.com
+
   # -- Match conditions for the default rule.
   matches:
     - path:
