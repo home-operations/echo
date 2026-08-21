@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"slices"
 	"strings"
 	"time"
 )
@@ -175,9 +176,9 @@ func clientIP(r *http.Request, trusted []netip.Prefix) (string, []string) {
 	if len(trusted) == 0 || !ipTrusted(peer, trusted) {
 		return peer, chain
 	}
-	for i := len(chain) - 1; i >= 0; i-- {
-		if !ipTrusted(chain[i], trusted) {
-			return chain[i], chain
+	for _, c := range slices.Backward(chain) {
+		if !ipTrusted(c, trusted) {
+			return c, chain
 		}
 	}
 	return peer, chain
