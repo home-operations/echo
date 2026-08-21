@@ -1,5 +1,61 @@
 # Changelog
 
+## [0.2.3](https://github.com/home-operations/echo/compare/0.2.2...0.2.3) (2026-08-21)
+
+
+### Bug Fixes
+
+* **chart:** keep example comments out of unrelated schema descriptions ([#83](https://github.com/home-operations/echo/issues/83)) ([6ce9ab2](https://github.com/home-operations/echo/commit/6ce9ab2dd22f867a671a58244d599c17e51ecc1a))
+* **ci:** fail the merge gate on cancelled jobs, and key the lint cache on the toolchain ([#58](https://github.com/home-operations/echo/issues/58)) ([b4afcdd](https://github.com/home-operations/echo/commit/b4afcdd065ab0eb101a068f22e8ee9b9e205b6ca))
+* **go:** update module go (1.26.4 → 1.26.5) ([#70](https://github.com/home-operations/echo/issues/70)) ([8661ad5](https://github.com/home-operations/echo/commit/8661ad5dd3a64d173de75140c674056aa53808e4))
+* **go:** update to go 1.27.0 ([#84](https://github.com/home-operations/echo/issues/84)) ([f9ba0a6](https://github.com/home-operations/echo/commit/f9ba0a6e5cf9b39a491e12071a32bc4ca819d7ad))
+
+
+### Documentation
+
+* add AGENTS.md with Go conventions ([#62](https://github.com/home-operations/echo/issues/62)) ([b218df4](https://github.com/home-operations/echo/commit/b218df464d345f43130bb1520016a5fc90b51026))
+* make AGENTS.md a generic, drift-resistant template ([#64](https://github.com/home-operations/echo/issues/64)) ([28d45d9](https://github.com/home-operations/echo/commit/28d45d9e2846088dfb4ab8505451733b3706aa56))
+
+
+### Build System
+
+* **mise:** add actionlint and refresh the lockfile ([#50](https://github.com/home-operations/echo/issues/50)) ([beda1ff](https://github.com/home-operations/echo/commit/beda1fff5978cde643a56ae1e3fefa84a84a1f6f))
+
+
+### Continuous Integration
+
+* gate pull requests on a single Build Success check ([#49](https://github.com/home-operations/echo/issues/49)) ([8c394eb](https://github.com/home-operations/echo/commit/8c394eb7e9fa8e6c242900d08ecc3f6355976e5e))
+* **github-action:** Update action actions/stale (v10.4.0 → v11.0.0) ([#59](https://github.com/home-operations/echo/issues/59)) ([6255ec0](https://github.com/home-operations/echo/commit/6255ec06b1634f6023c623a876bdb818b57b7505))
+* **github-action:** Update action docker/github-builder (v1.14.0 → v1.15.0) ([#57](https://github.com/home-operations/echo/issues/57)) ([25c7b5b](https://github.com/home-operations/echo/commit/25c7b5b0792a2e58c88937555ab586074b55787f))
+* **github-action:** Update action docker/github-builder (v1.15.0 → v1.16.0) ([#73](https://github.com/home-operations/echo/issues/73)) ([6fc568c](https://github.com/home-operations/echo/commit/6fc568cbbcc68075cb1b8c0387174d5ba21347fe))
+* **github-action:** Update action docker/login-action (v4.5.1 → v4.5.2) ([#60](https://github.com/home-operations/echo/issues/60)) ([85c0d4d](https://github.com/home-operations/echo/commit/85c0d4d6fab32cea1c10f3e79ae48f7799934918))
+* **github-action:** Update action docker/login-action (v4.5.2 → v4.6.0) ([#63](https://github.com/home-operations/echo/issues/63)) ([5cf5338](https://github.com/home-operations/echo/commit/5cf53380d775342afef7cd903240ee85513f0ecf))
+* **github-action:** Update action home-operations/.github/actions/workflow-lint (v1.0.2 → v1.0.3) ([#69](https://github.com/home-operations/echo/issues/69)) ([42bac11](https://github.com/home-operations/echo/commit/42bac118c36f2f9080e0b65329c73456d65d5d5b))
+* **github-action:** Update action jdx/mise-action (v4.2.1 → v4.2.2) ([#52](https://github.com/home-operations/echo/issues/52)) ([c9298e0](https://github.com/home-operations/echo/commit/c9298e094cc35a86b339951349818d652461f011))
+* **github-action:** Update action jdx/mise-action (v4.2.3 → v4.2.4) ([#71](https://github.com/home-operations/echo/issues/71)) ([5283840](https://github.com/home-operations/echo/commit/5283840d16ab0125233f00f65a946cc8652a7109))
+* **github-action:** Update github-actions ([#53](https://github.com/home-operations/echo/issues/53)) ([d6334ce](https://github.com/home-operations/echo/commit/d6334ceea17efb1c7f31a619ad5be6dcb6902a22))
+* **github-action:** update workflow-lint action (1.0.0 → v1.0.2) ([#66](https://github.com/home-operations/echo/issues/66)) ([967c73a](https://github.com/home-operations/echo/commit/967c73a08954fc32cc46fe03620efea0c598660f))
+* lint workflows with the shared composite action ([#51](https://github.com/home-operations/echo/issues/51)) ([c668830](https://github.com/home-operations/echo/commit/c6688306f1603cce30a4783d9db6f3f5fdaf8a6a))
+* skip release-please version-bump PRs in checks ([#48](https://github.com/home-operations/echo/issues/48)) ([2de44cc](https://github.com/home-operations/echo/commit/2de44ccad75994d8c94ce69a55979913ca469b32))
+* wire govulncheck into mise and CI ([#68](https://github.com/home-operations/echo/issues/68)) ([2eb630c](https://github.com/home-operations/echo/commit/2eb630cd2586bebec5694c61ea3f88426c7413e0))
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action jdx/mise-action (v4.2.4 → v4.2.5) ([#78](https://github.com/home-operations/echo/issues/78)) ([d4e845d](https://github.com/home-operations/echo/commit/d4e845d6d5c6f06bca14ef24f1eaf16a47526f1a))
+* **go:** pin go directive to 1.26.0 ([#79](https://github.com/home-operations/echo/issues/79)) ([88e2148](https://github.com/home-operations/echo/commit/88e2148d7ee85fc7eebac07672055a07ea38ea46))
+* **mise:** prune lockfile to used platforms ([#67](https://github.com/home-operations/echo/issues/67)) ([32591e5](https://github.com/home-operations/echo/commit/32591e54149ec5a53b5a52217beae7fdac925e7a))
+* **mise:** Update tool cosign (3.1.2 → 3.1.3) ([#74](https://github.com/home-operations/echo/issues/74)) ([5edab8a](https://github.com/home-operations/echo/commit/5edab8a17fc4f8ff8b698154f642066052eb11b3))
+* **mise:** update tool go (1.26.5 → 1.26.6) ([#82](https://github.com/home-operations/echo/issues/82)) ([9d4a187](https://github.com/home-operations/echo/commit/9d4a187dc6ca20350e9685f62032031552f2cdb3))
+* **mise:** update tool go:golang.org/x/vuln/cmd/govulncheck (1.6.0 → v1.7.0) ([#77](https://github.com/home-operations/echo/issues/77)) ([731f12d](https://github.com/home-operations/echo/commit/731f12d00660943587dc70a6b39a98e2cc05fed3))
+* **mise:** update tool helm (4.2.3 → 4.2.4) ([#81](https://github.com/home-operations/echo/issues/81)) ([32b85b4](https://github.com/home-operations/echo/commit/32b85b4b1cc43c2d59688e1e41709ef1e7432d4c))
+* **mise:** Update tool oxfmt (0.60.0 → 0.61.0) ([#54](https://github.com/home-operations/echo/issues/54)) ([d40cd22](https://github.com/home-operations/echo/commit/d40cd22d1c959cdb0657aa1fcb0926f3c2279be1))
+* **mise:** Update tool oxfmt (0.61.0 → 0.62.0) ([#72](https://github.com/home-operations/echo/issues/72)) ([5b7a778](https://github.com/home-operations/echo/commit/5b7a778707fdd6b9d262a0aeabd76f4cf7d927e4))
+* **mise:** Update tool oxfmt (0.62.0 → 0.63.0) ([#75](https://github.com/home-operations/echo/issues/75)) ([7114dc7](https://github.com/home-operations/echo/commit/7114dc73d6ba787100d638ee144ad2df456a45a5))
+* **mise:** Update tool zizmor (1.28.0 → 1.29.0) ([#65](https://github.com/home-operations/echo/issues/65)) ([4ad14aa](https://github.com/home-operations/echo/commit/4ad14aa759df077a7f22d5157002b7bc7dcc2d33))
+* **release-please:** standardize the release pull request title pattern ([#61](https://github.com/home-operations/echo/issues/61)) ([d13101b](https://github.com/home-operations/echo/commit/d13101b3ea4b4123189da0e4bef6fca5e64b74c3))
+* standardize release-please changelog sections ([#56](https://github.com/home-operations/echo/issues/56)) ([007ec54](https://github.com/home-operations/echo/commit/007ec54cc6ed20151d024c8af90d043f06cf2b9a))
+
 ## [0.2.2](https://github.com/home-operations/echo/compare/0.2.1...0.2.2) (2026-07-24)
 
 
