@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.4](https://github.com/home-operations/echo/compare/0.2.3...0.2.4) (2026-08-22)
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action docker/setup-buildx-action (v4.2.0 → v4.3.0) ([#87](https://github.com/home-operations/echo/issues/87)) ([bc39b6d](https://github.com/home-operations/echo/commit/bc39b6dc5a938ac59b4c545d0e12d47134070bdd))
+* **mise:** update tool oxfmt (0.63.0 → 0.64.0) ([#85](https://github.com/home-operations/echo/issues/85)) ([818fed8](https://github.com/home-operations/echo/commit/818fed87625acae1669ce9c57ad6cfa0d834d047))
+* **mise:** update tool yq (4.53.3 → 4.53.4) ([#86](https://github.com/home-operations/echo/issues/86)) ([0f1eb0a](https://github.com/home-operations/echo/commit/0f1eb0adc80dcc457da92002fdc568dbf75fe571))
+
 ## [0.2.3](https://github.com/home-operations/echo/compare/0.2.2...0.2.3) (2026-08-21)
 
 
