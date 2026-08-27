@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.2.4](https://github.com/home-operations/echo/compare/0.2.3...0.2.4) (2026-08-27)
+
+
+### Features
+
+* **go:** update module github.com/kimmachinegun/automemlimit (v0.7.5 → v1.0.0) ([#91](https://github.com/home-operations/echo/issues/91)) ([95ccf2d](https://github.com/home-operations/echo/commit/95ccf2d3c0bcfd546f92b13b9ac35e43cf3ade57))
+
+
+### Bug Fixes
+
+* drop UPX compression, packed binaries segfault (upx/upx[#18902](https://github.com/home-operations/echo/issues/18902)) ([#92](https://github.com/home-operations/echo/issues/92)) ([d7fd6ef](https://github.com/home-operations/echo/commit/d7fd6ef6318bf3d5cf999998bdcf2d667dee07ae))
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action docker/github-builder (v1.16.0 → v1.17.0) ([#90](https://github.com/home-operations/echo/issues/90)) ([5fd0eaf](https://github.com/home-operations/echo/commit/5fd0eaf50b16af86a995793f107b043556a78e76))
+* **github-action:** update action docker/setup-buildx-action (v4.2.0 → v4.3.0) ([#87](https://github.com/home-operations/echo/issues/87)) ([bc39b6d](https://github.com/home-operations/echo/commit/bc39b6dc5a938ac59b4c545d0e12d47134070bdd))
+* **mise:** update mise tools ([#89](https://github.com/home-operations/echo/issues/89)) ([9861ad2](https://github.com/home-operations/echo/commit/9861ad210bb9d8a1dd456c8787d4d7ac9dbc466d))
+* **mise:** update tool oxfmt (0.63.0 → 0.64.0) ([#85](https://github.com/home-operations/echo/issues/85)) ([818fed8](https://github.com/home-operations/echo/commit/818fed87625acae1669ce9c57ad6cfa0d834d047))
+* **mise:** update tool yq (4.53.3 → 4.53.4) ([#86](https://github.com/home-operations/echo/issues/86)) ([0f1eb0a](https://github.com/home-operations/echo/commit/0f1eb0adc80dcc457da92002fdc568dbf75fe571))
+
 ## [0.2.3](https://github.com/home-operations/echo/compare/0.2.2...0.2.3) (2026-08-21)
 
 
