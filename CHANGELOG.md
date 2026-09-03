@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.2.5](https://github.com/home-operations/echo/compare/0.2.4...0.2.5) (2026-09-03)
+
+
+### Features
+
+* **container:** update image mirror.gcr.io/curlimages/curl (8.21.0 → 8.22.0) ([#100](https://github.com/home-operations/echo/issues/100)) ([21bce06](https://github.com/home-operations/echo/commit/21bce06256dd1fa18432015aa19cb3c48d814dd1))
+* serve the echo natively over HTTPS on a second listener ([#102](https://github.com/home-operations/echo/issues/102)) ([8e8c995](https://github.com/home-operations/echo/commit/8e8c9953e93a6688f0c1896aaf35644b83dc50e7))
+
+
+### Documentation
+
+* **agents:** derive Go version from go.mod ([7eb0dbc](https://github.com/home-operations/echo/commit/7eb0dbc021b5046855788c560617f07aba0d0c68))
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action jdx/mise-action (v4.2.5 → v4.3.0) ([#96](https://github.com/home-operations/echo/issues/96)) ([ec68a00](https://github.com/home-operations/echo/commit/ec68a00bf474b4d4df15d3f0474ee6dc4d118d2e))
+* **mise:** update tool aqua:dadav/helm-schema (0.23.4 → 0.23.5) ([#94](https://github.com/home-operations/echo/issues/94)) ([ca49e06](https://github.com/home-operations/echo/commit/ca49e06399f03922c24a367807ecaba582b58bca))
+* **mise:** update tool golangci-lint (2.13.1 → 2.13.2) ([#97](https://github.com/home-operations/echo/issues/97)) ([2095b42](https://github.com/home-operations/echo/commit/2095b42ef16f7bfe2bcfeb6fe6124e06d748662c))
+* **mise:** update tool lefthook (2.1.11 → 2.1.12) ([#98](https://github.com/home-operations/echo/issues/98)) ([a59e353](https://github.com/home-operations/echo/commit/a59e353a6426a13d669fafa3be093fcd0bfa8044))
+* **mise:** update tool oxfmt (0.64.0 → 0.65.0) ([#95](https://github.com/home-operations/echo/issues/95)) ([650ac02](https://github.com/home-operations/echo/commit/650ac02d464cc391227b995bc8ee60794ce9c796))
+* **mise:** update tool zizmor (1.29.0 → 1.30.0) ([#101](https://github.com/home-operations/echo/issues/101)) ([5df6f99](https://github.com/home-operations/echo/commit/5df6f99824fc531543c1bc21d75e93fde7619da8))
+
 ## [0.2.4](https://github.com/home-operations/echo/compare/0.2.3...0.2.4) (2026-08-27)
 
 
