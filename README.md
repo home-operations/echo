@@ -25,7 +25,7 @@ $ curl -s 'http://localhost:8080/hello?name=world' -d 'hi'
 - Any path or method is echoed as JSON.
 - `/ws` upgrades to a WebSocket and echoes each message; a plain request to `/ws` is echoed normally.
 - `/healthz` (liveness) and `/readyz` (readiness) return `{"status":"ok"}` on the main echo port; `/metrics` serves Prometheus metrics on its own optional port (`:8081`), separate from the echo port.
-- Plain HTTP only; terminate TLS at the ingress. `protocol` is read from `X-Forwarded-Proto` when the peer is a trusted proxy.
+- Plain HTTP by default; terminate TLS at the ingress, and `protocol` is read from `X-Forwarded-Proto` when the peer is a trusted proxy. Set `ECHO_HTTPS_PORT` with a certificate and key to also serve the echo natively over TLS — see below.
 - Responses are `application/json` with `X-Content-Type-Options: nosniff`. Bodies are capped (1 MiB default) and flagged when truncated.
 - The client IP is read from `X-Forwarded-For` for trusted proxies.
 - With `ECHO_KUBERNETES=true` (chart `config.kubernetes`), adds a `kubernetes` block (pod, namespace, IP, node) from the Downward API. Off by default.
@@ -71,6 +71,32 @@ reflected back in the
 `ECHO_MAX_DELAY` modest (or set `ECHO_COMMANDS_ENABLED=false`) when echo is
 reachable from untrusted networks, and rate-limit at the ingress.
 
+## Native HTTPS
+
+For testing backend TLS (a Gateway API `BackendTLSPolicy`, a service mesh, or a
+client's trust store) echo can serve the same echo over TLS on a second port.
+Point it at a PEM certificate and key; the listener negotiates TLS 1.2+ and
+HTTP/2, reports `"protocol": "https"`, and adds a `tls` block with what the
+client negotiated:
+
+```console
+$ ECHO_HTTPS_PORT=8443 ECHO_HTTPS_CERT=tls.crt ECHO_HTTPS_KEY=tls.key ./echo &
+$ curl -s --cacert ca.crt https://echo.example.com:8443/ | jq .protocol,.tls
+"https"
+{
+  "version": "TLS 1.3",
+  "cipherSuite": "TLS_AES_128_GCM_SHA256",
+  "serverName": "echo.example.com",
+  "negotiatedProtocol": "h2"
+}
+```
+
+The certificate is loaded once at startup; restart echo to pick up a rotated
+one. In the chart, set `config.httpsPort` and mount the TLS Secret at
+`/etc/echo/tls` via `volumes`/`volumeMounts` (the default `config.httpsCert`/
+`config.httpsKey` paths match a `kubernetes.io/tls` Secret); an `https` port is
+then added to the container and the Service.
+
 ## Configuration
 
 Set via environment variables:
@@ -78,6 +104,9 @@ Set via environment variables:
 | Variable                    | Default   | Description                                                                         |
 | --------------------------- | --------- | ----------------------------------------------------------------------------------- |
 | `ECHO_HTTP_PORT`            | `8080`    | HTTP listen port (also serves the `/healthz` probe)                                 |
+| `ECHO_HTTPS_PORT`           | `0`       | HTTPS listen port serving the same echo over TLS; `0` disables                      |
+| `ECHO_HTTPS_CERT`           | _(empty)_ | Path to the PEM certificate for `ECHO_HTTPS_PORT` (required with it)                |
+| `ECHO_HTTPS_KEY`            | _(empty)_ | Path to the PEM private key for `ECHO_HTTPS_PORT` (required with it)                |
 | `ECHO_METRICS_ENABLED`      | `true`    | Expose Prometheus metrics; disabling removes the metrics listener                   |
 | `ECHO_METRICS_PORT`         | `8081`    | Metrics listen port (`/metrics` only)                                               |
 | `ECHO_LOG_LEVEL`            | `info`    | `debug`, `info`, `warn`, or `error`                                                 |

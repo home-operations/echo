@@ -78,6 +78,24 @@
           "title": "httpPort",
           "type": "integer"
         },
+        "httpsCert": {
+          "default": "/etc/echo/tls/tls.crt",
+          "description": "Path to the PEM certificate served on httpsPort (ECHO_HTTPS_CERT). The default matches a `kubernetes.io/tls` Secret mounted at /etc/echo/tls.",
+          "title": "httpsCert",
+          "type": "string"
+        },
+        "httpsKey": {
+          "default": "/etc/echo/tls/tls.key",
+          "description": "Path to the PEM private key for httpsCert (ECHO_HTTPS_KEY).",
+          "title": "httpsKey",
+          "type": "string"
+        },
+        "httpsPort": {
+          "default": 0,
+          "description": "HTTPS listen port (ECHO_HTTPS_PORT), serving the same echo over TLS for backend-TLS and trust testing. 0 disables it. When set, also adds an `https` container port and Service port; mount the certificate via `volumes`/`volumeMounts` and point `httpsCert`/`httpsKey` at it.",
+          "title": "httpsPort",
+          "type": "integer"
+        },
         "kubernetes": {
           "default": false,
           "description": "Add a `kubernetes` object (pod/namespace/IP/node) to responses, injected via the Downward API (ECHO_KUBERNETES). Off by default; it reveals cluster topology to callers.",
@@ -700,6 +718,12 @@
           "title": "externalTrafficPolicy",
           "type": "string"
         },
+        "httpsPort": {
+          "default": 443,
+          "description": "HTTPS service port, exposed only when config.httpsPort is set.",
+          "title": "httpsPort",
+          "type": "integer"
+        },
         "port": {
           "default": 80,
           "description": "HTTP service port.",
@@ -846,7 +870,7 @@
       "type": "array"
     },
     "volumes": {
-      "description": "Additional volumes on the Deployment pod (templated).",
+      "description": "Additional volumes on the Deployment pod (templated), e.g. the TLS Secret for config.httpsPort.",
       "items": {
         "required": []
       },

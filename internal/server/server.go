@@ -1,9 +1,10 @@
-// Package server wires echo's HTTP and metrics listeners together and manages
-// their lifecycle.
+// Package server wires echo's HTTP, HTTPS, and metrics listeners together and
+// manages their lifecycle.
 package server
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -81,12 +82,31 @@ func New(cfg *config.Config, log *slog.Logger) *Server {
 // Run starts every enabled listener and blocks until ctx is cancelled or a
 // listener fails, then drains them within the configured shutdown timeout.
 func (s *Server) Run(ctx context.Context) error {
-	g, gctx := errgroup.WithContext(ctx)
-
 	handler := s.handler()
+
+	// Load the keypair before binding anything so a bad certificate fails the
+	// process cleanly instead of racing the other listeners' startup.
+	var httpsSrv *http.Server
+	if s.cfg.HTTPSEnabled() {
+		cert, err := tls.LoadX509KeyPair(s.cfg.HTTPSCert, s.cfg.HTTPSKey)
+		if err != nil {
+			return fmt.Errorf("server: load https keypair: %w", err)
+		}
+		httpsSrv = newHTTPServer(fmt.Sprintf(":%d", s.cfg.HTTPSPort), handler)
+		httpsSrv.TLSConfig = &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			MinVersion:   tls.VersionTLS12,
+		}
+	}
+
+	g, gctx := errgroup.WithContext(ctx)
 
 	httpSrv := newHTTPServer(fmt.Sprintf(":%d", s.cfg.HTTPPort), handler)
 	g.Go(func() error { return serve(httpSrv, "http", s.log) })
+
+	if httpsSrv != nil {
+		g.Go(func() error { return serve(httpsSrv, "https", s.log) })
+	}
 
 	// The metrics listener is metrics-only and fully optional: /healthz lives on
 	// the main HTTP listener above, so disabling metrics removes this port
@@ -103,6 +123,7 @@ func (s *Server) Run(ctx context.Context) error {
 		sctx, cancel := context.WithTimeout(context.Background(), s.cfg.ShutdownTimeout)
 		defer cancel()
 		shutdown(sctx, httpSrv)
+		shutdown(sctx, httpsSrv)
 		shutdown(sctx, metricsSrv)
 		return nil
 	})
@@ -113,9 +134,18 @@ func (s *Server) Run(ctx context.Context) error {
 	return nil
 }
 
+// serve runs srv until it is shut down. A server with a TLSConfig serves TLS
+// using the certificates already loaded there; the empty file paths tell
+// net/http not to load its own.
 func serve(srv *http.Server, name string, log *slog.Logger) error {
 	log.Info("listening", "server", name, "addr", srv.Addr)
-	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	var err error
+	if srv.TLSConfig != nil {
+		err = srv.ListenAndServeTLS("", "")
+	} else {
+		err = srv.ListenAndServe()
+	}
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return fmt.Errorf("%s server: %w", name, err)
 	}
 	return nil

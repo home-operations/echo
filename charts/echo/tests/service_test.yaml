@@ -23,6 +23,30 @@ tests:
             targetPort: metrics
             protocol: TCP
 
+  - it: omits the https port by default
+    template: service.tpl
+    asserts:
+      - notContains:
+          path: spec.ports
+          content:
+            name: https
+            port: 443
+            targetPort: https
+            protocol: TCP
+
+  - it: exposes the https port when httpsPort is set
+    template: service.tpl
+    set:
+      config.httpsPort: 8443
+    asserts:
+      - contains:
+          path: spec.ports
+          content:
+            name: https
+            port: 443
+            targetPort: https
+            protocol: TCP
+
   - it: omits the metrics port when metrics are disabled
     template: service.tpl
     set:

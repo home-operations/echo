@@ -62,6 +62,9 @@ Kubernetes: `>=1.25.0-0`
 | config.disableRequestLogs | bool | `false` | Silence the per-request access log (ECHO_DISABLE_REQUEST_LOGS); the echo response is unaffected. |
 | config.echoBackToClient | bool | `true` | Return the JSON document to the client (ECHO_BACK_TO_CLIENT); false replies 204 No Content. |
 | config.httpPort | int | `8080` | HTTP listen port (ECHO_HTTP_PORT). |
+| config.httpsCert | string | `"/etc/echo/tls/tls.crt"` | Path to the PEM certificate served on httpsPort (ECHO_HTTPS_CERT). The default matches a `kubernetes.io/tls` Secret mounted at /etc/echo/tls. |
+| config.httpsKey | string | `"/etc/echo/tls/tls.key"` | Path to the PEM private key for httpsCert (ECHO_HTTPS_KEY). |
+| config.httpsPort | int | `0` | HTTPS listen port (ECHO_HTTPS_PORT), serving the same echo over TLS for backend-TLS and trust testing. 0 disables it. When set, also adds an `https` container port and Service port; mount the certificate via `volumes`/`volumeMounts` and point `httpsCert`/`httpsKey` at it. |
 | config.kubernetes | bool | `false` | Add a `kubernetes` object (pod/namespace/IP/node) to responses, injected via the Downward API (ECHO_KUBERNETES). Off by default; it reveals cluster topology to callers. |
 | config.logFormat | string | `"json"` | Log format (ECHO_LOG_FORMAT): json or text. |
 | config.logLevel | string | `"info"` | Log level (ECHO_LOG_LEVEL): debug, info, warn, or error. |
@@ -120,6 +123,7 @@ Kubernetes: `>=1.25.0-0`
 | securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true}` | echo container securityContext (no privilege escalation, read-only root filesystem, drops ALL capabilities). |
 | service.annotations | object | `{}` | Service annotations. |
 | service.externalTrafficPolicy | string | `""` | Service externalTrafficPolicy (`Local` preserves the client source IP; only applies to NodePort/LoadBalancer). Empty uses the cluster default. |
+| service.httpsPort | int | `443` | HTTPS service port, exposed only when config.httpsPort is set. |
 | service.port | int | `80` | HTTP service port. |
 | service.type | string | `"ClusterIP"` | Service type. |
 | serviceAccount.annotations | object | `{}` | ServiceAccount annotations. |
@@ -134,7 +138,7 @@ Kubernetes: `>=1.25.0-0`
 | tolerations | list | `[]` | Tolerations for pod scheduling (templated). |
 | topologySpreadConstraints | list | `[]` | Topology spread constraints for the pods (templated); relevant at replicaCount > 1, e.g. to spread across zones. |
 | volumeMounts | list | `[]` | Additional volume mounts on the echo container (templated). |
-| volumes | list | `[]` | Additional volumes on the Deployment pod (templated). |
+| volumes | list | `[]` | Additional volumes on the Deployment pod (templated), e.g. the TLS Secret for config.httpsPort. |
 
 ---
 

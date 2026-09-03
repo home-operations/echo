@@ -3,14 +3,24 @@ package server
 import (
 	"bytes"
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
 	"log/slog"
+	"math/big"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -749,5 +759,132 @@ func TestEchoDelayAbortsWhenClientGone(t *testing.T) {
 	}
 	if rec.Body.Len() != 0 {
 		t.Errorf("body = %q, want none when the delay is aborted", rec.Body.String())
+	}
+}
+
+// writeSelfSignedCert writes a throwaway certificate and key for the HTTPS
+// listener tests and returns their paths plus a pool that trusts the cert.
+func writeSelfSignedCert(t *testing.T) (certFile, keyFile string, roots *x509.CertPool) {
+	t.Helper()
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatalf("generate key: %v", err)
+	}
+	tmpl := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject:      pkix.Name{CommonName: "echo.test"},
+		DNSNames:     []string{"echo.test"},
+		IPAddresses:  []net.IP{net.IPv4(127, 0, 0, 1)},
+		NotBefore:    time.Now().Add(-time.Minute),
+		NotAfter:     time.Now().Add(time.Hour),
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+	}
+	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
+	if err != nil {
+		t.Fatalf("create certificate: %v", err)
+	}
+	keyDER, err := x509.MarshalECPrivateKey(key)
+	if err != nil {
+		t.Fatalf("marshal key: %v", err)
+	}
+
+	dir := t.TempDir()
+	certFile = filepath.Join(dir, "tls.crt")
+	keyFile = filepath.Join(dir, "tls.key")
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: keyDER})
+	if err := os.WriteFile(certFile, certPEM, 0o600); err != nil {
+		t.Fatalf("write cert: %v", err)
+	}
+	if err := os.WriteFile(keyFile, keyPEM, 0o600); err != nil {
+		t.Fatalf("write key: %v", err)
+	}
+
+	roots = x509.NewCertPool()
+	roots.AppendCertsFromPEM(certPEM)
+	return certFile, keyFile, roots
+}
+
+func TestRunServesHTTPS(t *testing.T) {
+	certFile, keyFile, roots := writeSelfSignedCert(t)
+
+	cfg := baseConfig()
+	cfg.HTTPPort = freePort(t)
+	cfg.HTTPSPort = freePort(t)
+	cfg.HTTPSCert = certFile
+	cfg.HTTPSKey = keyFile
+	cfg.ShutdownTimeout = 5 * time.Second
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- newTestServer(t, cfg).Run(ctx) }()
+
+	client := &http.Client{Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{RootCAs: roots, ServerName: "echo.test", MinVersion: tls.VersionTLS12},
+	}}
+	url := fmt.Sprintf("https://127.0.0.1:%d/secure", cfg.HTTPSPort)
+	var resp *http.Response
+	var err error
+	for range 100 {
+		resp, err = client.Get(url)
+		if err == nil {
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	if err != nil {
+		t.Fatalf("GET %s never succeeded: %v", url, err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d, want 200", resp.StatusCode)
+	}
+	var got struct {
+		Protocol string `json:"protocol"`
+		Path     string `json:"path"`
+		TLS      *struct {
+			Version    string `json:"version"`
+			ServerName string `json:"serverName"`
+		} `json:"tls"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&got); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if got.Protocol != "https" {
+		t.Errorf("protocol = %q, want https", got.Protocol)
+	}
+	if got.Path != "/secure" {
+		t.Errorf("path = %q, want /secure", got.Path)
+	}
+	if got.TLS == nil || got.TLS.Version == "" || got.TLS.ServerName != "echo.test" {
+		t.Errorf("tls = %+v, want version and serverName echo.test", got.TLS)
+	}
+
+	cancel()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Errorf("Run returned %v, want nil after graceful shutdown", err)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("Run did not return after cancellation")
+	}
+}
+
+func TestRunRejectsBadKeypair(t *testing.T) {
+	cfg := baseConfig()
+	cfg.HTTPPort = freePort(t)
+	cfg.HTTPSPort = freePort(t)
+	cfg.HTTPSCert = filepath.Join(t.TempDir(), "missing.crt")
+	cfg.HTTPSKey = filepath.Join(t.TempDir(), "missing.key")
+
+	err := newTestServer(t, cfg).Run(context.Background())
+	if err == nil {
+		t.Fatal("Run() = nil, want error for a missing keypair")
+	}
+	if !strings.Contains(err.Error(), "https keypair") {
+		t.Errorf("Run() error = %q, want it to mention the https keypair", err)
 	}
 }

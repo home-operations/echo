@@ -52,6 +52,7 @@ func run() error {
 		"version", version,
 		"commit", commit,
 		"http_port", cfg.HTTPPort,
+		"https_port", cfg.HTTPSPort,
 		"gomaxprocs", runtime.GOMAXPROCS(0),
 	)
 

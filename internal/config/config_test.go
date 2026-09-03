@@ -15,6 +15,9 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.HTTPPort != 8080 {
 		t.Errorf("HTTPPort = %d, want 8080", cfg.HTTPPort)
 	}
+	if cfg.HTTPSEnabled() {
+		t.Errorf("HTTPSEnabled() = true with HTTPSPort %d, want disabled by default", cfg.HTTPSPort)
+	}
 	// Metrics listen on 8081, separate from the public echo port (which also
 	// serves the /healthz probe).
 	if cfg.MetricsPort != 8081 {
@@ -74,18 +77,45 @@ func TestLoadOverrides(t *testing.T) {
 	}
 }
 
+func TestLoadHTTPS(t *testing.T) {
+	t.Setenv("ECHO_HTTPS_PORT", "8443")
+	t.Setenv("ECHO_HTTPS_CERT", "/tls/tls.crt")
+	t.Setenv("ECHO_HTTPS_KEY", "/tls/tls.key")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	if !cfg.HTTPSEnabled() {
+		t.Fatal("HTTPSEnabled() = false, want true")
+	}
+	if cfg.HTTPSPort != 8443 {
+		t.Errorf("HTTPSPort = %d, want 8443", cfg.HTTPSPort)
+	}
+	if cfg.HTTPSCert != "/tls/tls.crt" || cfg.HTTPSKey != "/tls/tls.key" {
+		t.Errorf("HTTPSCert/HTTPSKey = %q/%q, want /tls/tls.crt and /tls/tls.key", cfg.HTTPSCert, cfg.HTTPSKey)
+	}
+}
+
 func TestLoadInvalid(t *testing.T) {
 	tests := map[string]map[string]string{
-		"bad http port":                        {"ECHO_HTTP_PORT": "70000"},
-		"zero http port":                       {"ECHO_HTTP_PORT": "0"},
-		"bad log level":                        {"ECHO_LOG_LEVEL": "loud"},
-		"bad log format":                       {"ECHO_LOG_FORMAT": "xml"},
-		"bad trusted proxy":                    {"ECHO_TRUSTED_PROXIES": "not-a-cidr"},
-		"negative max body":                    {"ECHO_MAX_BODY_BYTES": "-1"},
-		"negative max delay":                   {"ECHO_MAX_DELAY": "-1s"},
-		"bad max delay":                        {"ECHO_MAX_DELAY": "soon"},
-		"negative ws idle":                     {"ECHO_WS_IDLE_TIMEOUT": "-1s"},
-		"metrics port collides with http port": {"ECHO_METRICS_PORT": "8080"},
+		"bad http port":                         {"ECHO_HTTP_PORT": "70000"},
+		"zero http port":                        {"ECHO_HTTP_PORT": "0"},
+		"bad log level":                         {"ECHO_LOG_LEVEL": "loud"},
+		"bad log format":                        {"ECHO_LOG_FORMAT": "xml"},
+		"bad trusted proxy":                     {"ECHO_TRUSTED_PROXIES": "not-a-cidr"},
+		"negative max body":                     {"ECHO_MAX_BODY_BYTES": "-1"},
+		"negative max delay":                    {"ECHO_MAX_DELAY": "-1s"},
+		"bad max delay":                         {"ECHO_MAX_DELAY": "soon"},
+		"negative ws idle":                      {"ECHO_WS_IDLE_TIMEOUT": "-1s"},
+		"metrics port collides with http port":  {"ECHO_METRICS_PORT": "8080"},
+		"bad https port":                        {"ECHO_HTTPS_PORT": "70000", "ECHO_HTTPS_CERT": "c", "ECHO_HTTPS_KEY": "k"},
+		"https port without cert and key":       {"ECHO_HTTPS_PORT": "8443"},
+		"https port without key":                {"ECHO_HTTPS_PORT": "8443", "ECHO_HTTPS_CERT": "c"},
+		"https cert without port":               {"ECHO_HTTPS_CERT": "c", "ECHO_HTTPS_KEY": "k"},
+		"https port collides with http port":    {"ECHO_HTTPS_PORT": "8080", "ECHO_HTTPS_CERT": "c", "ECHO_HTTPS_KEY": "k"},
+		"https port collides with metrics port": {"ECHO_HTTPS_PORT": "8081", "ECHO_HTTPS_CERT": "c", "ECHO_HTTPS_KEY": "k"},
 	}
 
 	for name, env := range tests {

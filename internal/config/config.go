@@ -3,6 +3,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/netip"
@@ -18,6 +19,16 @@ import (
 // their parsing fails fast with a clear message.
 type Config struct {
 	HTTPPort int `env:"ECHO_HTTP_PORT" envDefault:"8080"`
+
+	// HTTPSPort opens a second listener serving the same echo over TLS, so
+	// backend-TLS policies and trust chains can be exercised against echo
+	// without a terminating proxy in front. 0 (the default) disables it;
+	// HTTPSCert and HTTPSKey are required when it is set.
+	HTTPSPort int `env:"ECHO_HTTPS_PORT" envDefault:"0"`
+	// HTTPSCert is the path to the PEM certificate (chain) served on HTTPSPort.
+	HTTPSCert string `env:"ECHO_HTTPS_CERT"`
+	// HTTPSKey is the path to the PEM private key matching HTTPSCert.
+	HTTPSKey string `env:"ECHO_HTTPS_KEY"`
 
 	// MetricsEnabled exposes Prometheus metrics at /metrics on MetricsPort.
 	// Disabling it removes the metrics listener entirely; the /healthz probe
@@ -118,12 +129,18 @@ func (c *Config) validate() error {
 	if err := validatePort(c.HTTPPort, "ECHO_HTTP_PORT"); err != nil {
 		return err
 	}
+	if err := c.validateHTTPS(); err != nil {
+		return err
+	}
 	if c.MetricsEnabled {
 		if err := validatePort(c.MetricsPort, "ECHO_METRICS_PORT"); err != nil {
 			return err
 		}
 		if c.MetricsPort == c.HTTPPort {
 			return fmt.Errorf("config: ECHO_METRICS_PORT and ECHO_HTTP_PORT are both %d; they must differ", c.HTTPPort)
+		}
+		if c.MetricsPort == c.HTTPSPort {
+			return fmt.Errorf("config: ECHO_METRICS_PORT and ECHO_HTTPS_PORT are both %d; they must differ", c.HTTPSPort)
 		}
 	}
 	switch strings.ToLower(c.LogFormat) {
@@ -139,6 +156,34 @@ func (c *Config) validate() error {
 	}
 	if c.WSIdleTimeout < 0 {
 		return fmt.Errorf("config: ECHO_WS_IDLE_TIMEOUT must be >= 0, got %s", c.WSIdleTimeout)
+	}
+	return nil
+}
+
+// HTTPSEnabled reports whether the TLS listener is configured.
+func (c *Config) HTTPSEnabled() bool {
+	return c.HTTPSPort != 0
+}
+
+// validateHTTPS requires the port, certificate, and key to be set together: a
+// stray ECHO_HTTPS_CERT with no port (or the reverse) is almost certainly a
+// misconfiguration, so it fails at startup rather than silently serving plain
+// HTTP only.
+func (c *Config) validateHTTPS() error {
+	if !c.HTTPSEnabled() {
+		if c.HTTPSCert != "" || c.HTTPSKey != "" {
+			return errors.New("config: ECHO_HTTPS_CERT/ECHO_HTTPS_KEY are set but ECHO_HTTPS_PORT is 0")
+		}
+		return nil
+	}
+	if err := validatePort(c.HTTPSPort, "ECHO_HTTPS_PORT"); err != nil {
+		return err
+	}
+	if c.HTTPSPort == c.HTTPPort {
+		return fmt.Errorf("config: ECHO_HTTPS_PORT and ECHO_HTTP_PORT are both %d; they must differ", c.HTTPPort)
+	}
+	if c.HTTPSCert == "" || c.HTTPSKey == "" {
+		return errors.New("config: ECHO_HTTPS_PORT is set; ECHO_HTTPS_CERT and ECHO_HTTPS_KEY are required")
 	}
 	return nil
 }

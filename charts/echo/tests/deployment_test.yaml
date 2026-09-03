@@ -80,6 +80,53 @@ tests:
             containerPort: 8081
             protocol: TCP
 
+  - it: omits the https listener by default
+    template: deployment.tpl
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ECHO_HTTPS_PORT
+            value: "0"
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ECHO_HTTPS_CERT
+            value: /etc/echo/tls/tls.crt
+      - notContains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: https
+            containerPort: 0
+            protocol: TCP
+
+  - it: wires the https listener when httpsPort is set
+    template: deployment.tpl
+    set:
+      config.httpsPort: 8443
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ECHO_HTTPS_PORT
+            value: "8443"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ECHO_HTTPS_CERT
+            value: /etc/echo/tls/tls.crt
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ECHO_HTTPS_KEY
+            value: /etc/echo/tls/tls.key
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: https
+            containerPort: 8443
+            protocol: TCP
+
   - it: sets resources and Deployment annotations when configured
     template: deployment.tpl
     set:

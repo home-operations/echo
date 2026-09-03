@@ -3,6 +3,7 @@
 package echo
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"io"
 	"net"
@@ -46,7 +47,10 @@ type Request struct {
 	IP            string              `json:"ip"`
 	IPs           []string            `json:"ips,omitempty"`
 	OS            OS                  `json:"os"`
-	Kubernetes    *KubernetesInfo     `json:"kubernetes,omitempty"`
+	// TLS describes the handshake when the request arrived on the HTTPS
+	// listener; omitted for plain HTTP.
+	TLS        *TLSInfo        `json:"tls,omitempty"`
+	Kubernetes *KubernetesInfo `json:"kubernetes,omitempty"`
 	// Applied reports the response-shaping directives (echo-code/delay/header)
 	// echo honored for this request; omitted when none applied.
 	Applied *Applied `json:"applied,omitempty"`
@@ -55,6 +59,27 @@ type Request struct {
 // OS describes the server process's host.
 type OS struct {
 	Hostname string `json:"hostname"`
+}
+
+// TLSInfo reflects what the client negotiated on a direct TLS connection: the
+// SNI and ALPN it sent are the parts a backend-TLS test usually wants to see.
+type TLSInfo struct {
+	Version            string `json:"version"`
+	CipherSuite        string `json:"cipherSuite"`
+	ServerName         string `json:"serverName,omitempty"`
+	NegotiatedProtocol string `json:"negotiatedProtocol,omitempty"`
+}
+
+func tlsInfo(cs *tls.ConnectionState) *TLSInfo {
+	if cs == nil {
+		return nil
+	}
+	return &TLSInfo{
+		Version:            tls.VersionName(cs.Version),
+		CipherSuite:        tls.CipherSuiteName(cs.CipherSuite),
+		ServerName:         cs.ServerName,
+		NegotiatedProtocol: cs.NegotiatedProtocol,
+	}
 }
 
 // KubernetesInfo carries pod/node identity from the Downward API. It is only
@@ -86,10 +111,13 @@ func ReadBody(r *http.Request, max int64) ([]byte, bool, error) {
 // Build assembles the echo document. body is the already-read (and possibly
 // truncated) request body; Build performs no I/O of its own.
 func Build(r *http.Request, body []byte, truncated bool, opts Options) *Request {
-	// echo serves plain HTTP; report the client-facing scheme from the
-	// TLS-terminating proxy's X-Forwarded-Proto — gated on the peer being a
-	// trusted proxy, the same trust rule X-Forwarded-For gets.
+	// The scheme is what this listener negotiated, unless a trusted
+	// TLS-terminating proxy reports the client-facing one via
+	// X-Forwarded-Proto — the same trust rule X-Forwarded-For gets.
 	protocol := "http"
+	if r.TLS != nil {
+		protocol = "https"
+	}
 	if xfp := r.Header.Get("X-Forwarded-Proto"); xfp != "" && ipTrusted(hostOnly(r.RemoteAddr), opts.TrustedProxies) {
 		protocol, _, _ = strings.Cut(xfp, ",")
 		protocol = strings.TrimSpace(protocol)
@@ -108,6 +136,7 @@ func Build(r *http.Request, body []byte, truncated bool, opts Options) *Request 
 		BodyTruncated: truncated,
 		RemoteAddr:    r.RemoteAddr,
 		OS:            OS{Hostname: opts.Hostname},
+		TLS:           tlsInfo(r.TLS),
 	}
 
 	if len(body) > 0 {

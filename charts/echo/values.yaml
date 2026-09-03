@@ -45,6 +45,12 @@ fullnameOverride: ""
 config:
   # -- HTTP listen port (ECHO_HTTP_PORT).
   httpPort: 8080
+  # -- HTTPS listen port (ECHO_HTTPS_PORT), serving the same echo over TLS for backend-TLS and trust testing. 0 disables it. When set, also adds an `https` container port and Service port; mount the certificate via `volumes`/`volumeMounts` and point `httpsCert`/`httpsKey` at it.
+  httpsPort: 0
+  # -- Path to the PEM certificate served on httpsPort (ECHO_HTTPS_CERT). The default matches a `kubernetes.io/tls` Secret mounted at /etc/echo/tls.
+  httpsCert: /etc/echo/tls/tls.crt
+  # -- Path to the PEM private key for httpsCert (ECHO_HTTPS_KEY).
+  httpsKey: /etc/echo/tls/tls.key
   # -- Expose Prometheus metrics at /metrics on metricsPort (ECHO_METRICS_ENABLED). Disabling removes the metrics listener, container port, Service port, and ServiceMonitor entirely; health probes are unaffected (they target the http port).
   metricsEnabled: true
   # -- Metrics listen port (ECHO_METRICS_PORT), kept off the public echo port.
@@ -154,6 +160,8 @@ service:
   externalTrafficPolicy: ""
   # -- HTTP service port.
   port: 80
+  # -- HTTPS service port, exposed only when config.httpsPort is set.
+  httpsPort: 443
   # -- Service annotations.
   annotations: {}
 
@@ -222,10 +230,17 @@ httpRoute:
         type: PathPrefix
         value: /
 
-# -- Additional volumes on the Deployment pod (templated).
+# -- Additional volumes on the Deployment pod (templated), e.g. the TLS Secret for config.httpsPort.
 volumes: []
+#  - name: tls
+#    secret:
+#      secretName: echo-tls
+
 # -- Additional volume mounts on the echo container (templated).
 volumeMounts: []
+#  - name: tls
+#    mountPath: /etc/echo/tls
+#    readOnly: true
 
 # -- Node selector for pod scheduling (templated).
 nodeSelector: {}
