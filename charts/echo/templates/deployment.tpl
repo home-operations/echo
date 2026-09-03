@@ -51,6 +51,14 @@ spec:
           env:
             - name: ECHO_HTTP_PORT
               value: {{ .Values.config.httpPort | quote }}
+            {{- if .Values.config.httpsPort }}
+            - name: ECHO_HTTPS_PORT
+              value: {{ .Values.config.httpsPort | quote }}
+            - name: ECHO_HTTPS_CERT
+              value: {{ .Values.config.httpsCert | quote }}
+            - name: ECHO_HTTPS_KEY
+              value: {{ .Values.config.httpsKey | quote }}
+            {{- end }}
             - name: ECHO_METRICS_ENABLED
               value: {{ .Values.config.metricsEnabled | quote }}
             - name: ECHO_METRICS_PORT
@@ -117,6 +125,11 @@ spec:
             - name: http
               containerPort: {{ .Values.config.httpPort }}
               protocol: TCP
+            {{- if .Values.config.httpsPort }}
+            - name: https
+              containerPort: {{ .Values.config.httpsPort }}
+              protocol: TCP
+            {{- end }}
             {{- if .Values.config.metricsEnabled }}
             - name: metrics
               containerPort: {{ .Values.config.metricsPort }}

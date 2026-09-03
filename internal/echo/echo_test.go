@@ -1,6 +1,7 @@
 package echo
 
 import (
+	"crypto/tls"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -67,6 +68,44 @@ func TestBuildProtocolUntrustedPeer(t *testing.T) {
 	}
 }
 
+func TestBuildTLS(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "https://echo.example.com/", nil)
+	req.TLS = &tls.ConnectionState{
+		Version:            tls.VersionTLS13,
+		CipherSuite:        tls.TLS_AES_128_GCM_SHA256,
+		ServerName:         "echo.example.com",
+		NegotiatedProtocol: "h2",
+	}
+
+	got := Build(req, nil, false, Options{Now: time.Unix(0, 0)})
+
+	if got.Protocol != "https" {
+		t.Errorf("Protocol = %q, want https", got.Protocol)
+	}
+	if got.TLS == nil {
+		t.Fatal("TLS = nil, want handshake details")
+	}
+	want := TLSInfo{Version: "TLS 1.3", CipherSuite: "TLS_AES_128_GCM_SHA256", ServerName: "echo.example.com", NegotiatedProtocol: "h2"}
+	if *got.TLS != want {
+		t.Errorf("TLS = %+v, want %+v", *got.TLS, want)
+	}
+}
+
+func TestBuildTLSTrustedProxyOverridesProtocol(t *testing.T) {
+	// A trusted proxy in front of the HTTPS listener may itself have been
+	// reached over plain HTTP; its X-Forwarded-Proto is the client-facing truth.
+	req := httptest.NewRequest(http.MethodGet, "https://x/", nil)
+	req.TLS = &tls.ConnectionState{}
+	req.Header.Set("X-Forwarded-Proto", "http")
+	got := Build(req, nil, false, Options{
+		Now:            time.Unix(0, 0),
+		TrustedProxies: []netip.Prefix{netip.MustParsePrefix("192.0.2.0/24")},
+	})
+	if got.Protocol != "http" {
+		t.Errorf("Protocol = %q, want http (XFP from trusted proxy)", got.Protocol)
+	}
+}
+
 func TestBuildJSONBody(t *testing.T) {
 	body := []byte(`{"x":1}`)
 	req := httptest.NewRequest(http.MethodPost, "http://x/", nil)
@@ -82,6 +121,9 @@ func TestBuildJSONBody(t *testing.T) {
 	}
 	if got.Protocol != "http" {
 		t.Errorf("Protocol = %q, want http", got.Protocol)
+	}
+	if got.TLS != nil {
+		t.Errorf("TLS = %+v, want nil for plain HTTP", got.TLS)
 	}
 }
 
