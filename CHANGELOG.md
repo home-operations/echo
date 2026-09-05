@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.6](https://github.com/home-operations/echo/compare/0.2.5...0.2.6) (2026-09-05)
+
+
+### Miscellaneous Chores
+
+* **mise:** update tool go (1.27.0 → 1.27.1) ([#105](https://github.com/home-operations/echo/issues/105)) ([503b21c](https://github.com/home-operations/echo/commit/503b21c50ffbf1ba003d18463f28dc1fca793a1a))
+* **mise:** update tool oxfmt (0.65.0 → 0.66.0) ([#103](https://github.com/home-operations/echo/issues/103)) ([3ed2410](https://github.com/home-operations/echo/commit/3ed24101a7609e8728184e15f35b6c5a80dce94e))
+
 ## [0.2.5](https://github.com/home-operations/echo/compare/0.2.4...0.2.5) (2026-09-03)
 
 
