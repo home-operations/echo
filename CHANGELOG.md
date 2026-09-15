@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.2.6](https://github.com/home-operations/echo/compare/0.2.5...0.2.6) (2026-09-15)
+
+
+### Features
+
+* **go:** update module golang.org/x/sync (v0.22.0 → v0.23.0) ([#107](https://github.com/home-operations/echo/issues/107)) ([1428cb5](https://github.com/home-operations/echo/commit/1428cb5af972dd15b33e6eda7f4c3f09f335067a))
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action helm/kind-action (v1.14.0 → v1.15.0) ([#106](https://github.com/home-operations/echo/issues/106)) ([533acd8](https://github.com/home-operations/echo/commit/533acd8eead891e77be7d064431dc5c3b057efc0))
+* **github-action:** update action kindest/node (v1.34.0 → v1.37.0) ([#112](https://github.com/home-operations/echo/issues/112)) ([069480f](https://github.com/home-operations/echo/commit/069480fc4b9ebf4e6c500955b569699272009b83))
+* **github-release:** update release kubernetes-sigs/kind (v0.30.0 → v0.33.0) ([#113](https://github.com/home-operations/echo/issues/113)) ([759bf85](https://github.com/home-operations/echo/commit/759bf85a4159c9cdd5a4f91545aa0989a03c937d))
+* **mise:** update tool go (1.27.0 → 1.27.1) ([#105](https://github.com/home-operations/echo/issues/105)) ([503b21c](https://github.com/home-operations/echo/commit/503b21c50ffbf1ba003d18463f28dc1fca793a1a))
+* **mise:** update tool go:golang.org/x/vuln/cmd/govulncheck (1.7.0 → v1.8.0) ([#108](https://github.com/home-operations/echo/issues/108)) ([4177d71](https://github.com/home-operations/echo/commit/4177d713d88a946f58d3ffcbc79c7b58263f015c))
+* **mise:** update tool helm (4.2.4 → 4.3.0) ([#111](https://github.com/home-operations/echo/issues/111)) ([9fec1f3](https://github.com/home-operations/echo/commit/9fec1f342adfbe0f122610161d83c3d5d491affd))
+* **mise:** update tool oxfmt (0.65.0 → 0.66.0) ([#103](https://github.com/home-operations/echo/issues/103)) ([3ed2410](https://github.com/home-operations/echo/commit/3ed24101a7609e8728184e15f35b6c5a80dce94e))
+* **mise:** update tool oxfmt (0.66.0 → 0.67.0) ([#109](https://github.com/home-operations/echo/issues/109)) ([07ee3e9](https://github.com/home-operations/echo/commit/07ee3e99fb1ef25223bcf7c090336eb8fcdc2706))
+* **mise:** update tool zizmor (1.30.0 → 1.30.1) ([#110](https://github.com/home-operations/echo/issues/110)) ([ab8079a](https://github.com/home-operations/echo/commit/ab8079ae5bff560f15f022ff9b299cc4fc7b6e64))
+
 ## [0.2.5](https://github.com/home-operations/echo/compare/0.2.4...0.2.5) (2026-09-03)
 
 
