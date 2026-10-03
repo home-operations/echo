@@ -1,5 +1,50 @@
 # Changelog
 
+## [0.2.6](https://github.com/home-operations/echo/compare/0.2.5...0.2.6) (2026-10-03)
+
+
+### Features
+
+* **go:** update module golang.org/x/sync (v0.22.0 → v0.23.0) ([#107](https://github.com/home-operations/echo/issues/107)) ([1428cb5](https://github.com/home-operations/echo/commit/1428cb5af972dd15b33e6eda7f4c3f09f335067a))
+
+
+### Documentation
+
+* **agents:** point to the org AI Usage Policy instead of restating it ([ba5f3f5](https://github.com/home-operations/echo/commit/ba5f3f5b5727f3e36077b85f267638ed03072cb0))
+* **agents:** update AI usage policy summary ([821b01c](https://github.com/home-operations/echo/commit/821b01c6406e06f1f7a3af68218e4a0d8f2e35a8))
+
+
+### Continuous Integration
+
+* **github-action:** update github-actions ([#118](https://github.com/home-operations/echo/issues/118)) ([670426b](https://github.com/home-operations/echo/commit/670426bf8bf030428bfcf3be497aa4de3daf38a8))
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action helm/kind-action (v1.14.0 → v1.15.0) ([#106](https://github.com/home-operations/echo/issues/106)) ([533acd8](https://github.com/home-operations/echo/commit/533acd8eead891e77be7d064431dc5c3b057efc0))
+* **github-action:** update action jdx/mise-action (v4.3.0 → v5.0.0) ([#124](https://github.com/home-operations/echo/issues/124)) ([4dd0d0a](https://github.com/home-operations/echo/commit/4dd0d0ae39b4a9d6cf8a8e02e81dcc3bb8146955))
+* **github-action:** update action kindest/node (v1.34.0 → v1.37.0) ([#112](https://github.com/home-operations/echo/issues/112)) ([069480f](https://github.com/home-operations/echo/commit/069480fc4b9ebf4e6c500955b569699272009b83))
+* **github-action:** update action ubuntu (24.04 → 26.04) ([#117](https://github.com/home-operations/echo/issues/117)) ([87b1472](https://github.com/home-operations/echo/commit/87b1472ea002c7bbade2295e751887ef9c1b624f))
+* **github-action:** update github-actions ([#116](https://github.com/home-operations/echo/issues/116)) ([0d9d280](https://github.com/home-operations/echo/commit/0d9d280204ecf65c07f27d83d1d25494bc023390))
+* **github-release:** update release helm-unittest/helm-unittest (v1.1.2 → v1.2.0) ([#123](https://github.com/home-operations/echo/issues/123)) ([fd0eb8c](https://github.com/home-operations/echo/commit/fd0eb8c64715860971e7c05cb0a860318d415223))
+* **github-release:** update release helm-unittest/helm-unittest (v1.2.0 → v1.2.1) ([#127](https://github.com/home-operations/echo/issues/127)) ([e805b95](https://github.com/home-operations/echo/commit/e805b955b9b3ba9c5bcc2fb3c062da4b517998c5))
+* **github-release:** update release kubernetes-sigs/kind (v0.30.0 → v0.33.0) ([#113](https://github.com/home-operations/echo/issues/113)) ([759bf85](https://github.com/home-operations/echo/commit/759bf85a4159c9cdd5a4f91545aa0989a03c937d))
+* **mise:** update tool go (1.27.0 → 1.27.1) ([#105](https://github.com/home-operations/echo/issues/105)) ([503b21c](https://github.com/home-operations/echo/commit/503b21c50ffbf1ba003d18463f28dc1fca793a1a))
+* **mise:** update tool go:golang.org/x/vuln/cmd/govulncheck (1.7.0 → v1.8.0) ([#108](https://github.com/home-operations/echo/issues/108)) ([4177d71](https://github.com/home-operations/echo/commit/4177d713d88a946f58d3ffcbc79c7b58263f015c))
+* **mise:** update tool golangci-lint (2.13.2 → 2.14.0) ([#121](https://github.com/home-operations/echo/issues/121)) ([217ff7a](https://github.com/home-operations/echo/commit/217ff7a1e7fe6494699bbc1a9cbc8321876e54ac))
+* **mise:** update tool helm (4.2.4 → 4.3.0) ([#111](https://github.com/home-operations/echo/issues/111)) ([9fec1f3](https://github.com/home-operations/echo/commit/9fec1f342adfbe0f122610161d83c3d5d491affd))
+* **mise:** update tool lefthook (2.1.12 → 2.1.14) ([#114](https://github.com/home-operations/echo/issues/114)) ([e59f640](https://github.com/home-operations/echo/commit/e59f640df8f0bcfc5ded5ebf6b7123ee05081b98))
+* **mise:** update tool lefthook (2.1.14 → 2.1.15) ([#126](https://github.com/home-operations/echo/issues/126)) ([c872cde](https://github.com/home-operations/echo/commit/c872cde4b97d2e664b4e31f62e331f611ba6a37c))
+* **mise:** update tool oxfmt (0.65.0 → 0.66.0) ([#103](https://github.com/home-operations/echo/issues/103)) ([3ed2410](https://github.com/home-operations/echo/commit/3ed24101a7609e8728184e15f35b6c5a80dce94e))
+* **mise:** update tool oxfmt (0.66.0 → 0.67.0) ([#109](https://github.com/home-operations/echo/issues/109)) ([07ee3e9](https://github.com/home-operations/echo/commit/07ee3e99fb1ef25223bcf7c090336eb8fcdc2706))
+* **mise:** update tool oxfmt (0.67.0 → 0.68.0) ([#115](https://github.com/home-operations/echo/issues/115)) ([29a50c5](https://github.com/home-operations/echo/commit/29a50c53530f5512d5023feece5adfb9d1d7f6a5))
+* **mise:** update tool oxfmt (0.68.0 → 0.69.0) ([#119](https://github.com/home-operations/echo/issues/119)) ([c343a22](https://github.com/home-operations/echo/commit/c343a22252d06ab19a48621e0ae45fdd891eb3e8))
+* **mise:** update tool oxfmt (0.69.0 → 0.70.0) ([#120](https://github.com/home-operations/echo/issues/120)) ([46e05ba](https://github.com/home-operations/echo/commit/46e05baf2b14f731ba10338a6344514b9827d151))
+* **mise:** update tool oxfmt (0.70.0 → 0.71.0) ([#122](https://github.com/home-operations/echo/issues/122)) ([0a9214a](https://github.com/home-operations/echo/commit/0a9214a2cdb62f2342a6803be6c2a426c9e53823))
+* **mise:** update tool yq (4.53.6 → 4.54.1) ([#125](https://github.com/home-operations/echo/issues/125)) ([72ef1c8](https://github.com/home-operations/echo/commit/72ef1c8740d6915d84a2afc5522ddff5471a5cd3))
+* **mise:** update tool zizmor (1.30.0 → 1.30.1) ([#110](https://github.com/home-operations/echo/issues/110)) ([ab8079a](https://github.com/home-operations/echo/commit/ab8079ae5bff560f15f022ff9b299cc4fc7b6e64))
+* **mise:** upgrade lockfile to format revision 3 ([3d81362](https://github.com/home-operations/echo/commit/3d81362495e8823b339d01585259fecde29844a4))
+
 ## [0.2.5](https://github.com/home-operations/echo/compare/0.2.4...0.2.5) (2026-09-03)
 
 
