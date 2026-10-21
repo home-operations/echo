@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.2.7](https://github.com/home-operations/echo/compare/0.2.6...0.2.7) (2026-10-21)
+
+
+### Features
+
+* **container:** update image mirror.gcr.io/curlimages/curl (8.22.0 → 8.23.0) ([#148](https://github.com/home-operations/echo/issues/148)) ([1216219](https://github.com/home-operations/echo/commit/121621903d33696b8cd0055ce9b60ceb0bd0ed3b))
+
+
+### Bug Fixes
+
+* **container:** update image mirror.gcr.io/curlimages/curl (a134550 → 11e64e2) ([#149](https://github.com/home-operations/echo/issues/149)) ([627b74c](https://github.com/home-operations/echo/commit/627b74c8e6f99335b9118165c2c1ea18e242df4e))
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action jdx/mise-action (v5.1.2 → v5.2.0) ([#150](https://github.com/home-operations/echo/issues/150)) ([c11fe37](https://github.com/home-operations/echo/commit/c11fe37d45e5d0d521c1c61affd354d344857c50))
+* **mise:** update mise tools ([#146](https://github.com/home-operations/echo/issues/146)) ([ffab4c3](https://github.com/home-operations/echo/commit/ffab4c30ba725dea040a99b2c4e43bf3741ba3d0))
+* **mise:** update tool go (1.27.2 → 1.27.3) ([#152](https://github.com/home-operations/echo/issues/152)) ([49c0a52](https://github.com/home-operations/echo/commit/49c0a52c57bbd82ce92099b8a450baf87c7918fb))
+* **mise:** update tool golangci-lint (2.14.0 → 2.15.0) ([#151](https://github.com/home-operations/echo/issues/151)) ([1cabab3](https://github.com/home-operations/echo/commit/1cabab3345cc50ec37ff27c1e7143f18b2877d7f))
+
 ## [0.2.6](https://github.com/home-operations/echo/compare/0.2.5...0.2.6) (2026-10-18)
 
 
