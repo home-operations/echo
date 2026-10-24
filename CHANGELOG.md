@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.8](https://github.com/home-operations/echo/compare/0.2.7...0.2.8) (2026-10-24)
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action jdx/mise-action (v5.2.1 → v5.2.2) ([#158](https://github.com/home-operations/echo/issues/158)) ([98a33e2](https://github.com/home-operations/echo/commit/98a33e242a317ba2bf6a4e2f4f80f219d8000e36))
+* **github-action:** update github-actions ([#155](https://github.com/home-operations/echo/issues/155)) ([b82da9a](https://github.com/home-operations/echo/commit/b82da9a4e6f5e815a0eec95b3294a75343dc4712))
+* **mise:** update tool aqua:dadav/helm-schema (0.23.5 → 0.24.0) ([#153](https://github.com/home-operations/echo/issues/153)) ([80e1d87](https://github.com/home-operations/echo/commit/80e1d87870012fe06d9e262b38e371fc4563aea3))
+* **mise:** update tool cosign (3.1.3 → 3.1.4) ([#157](https://github.com/home-operations/echo/issues/157)) ([3492f2d](https://github.com/home-operations/echo/commit/3492f2dc027c25910fe89a6e30d0469c93a32db0))
+* **mise:** update tool oxfmt (0.73.0 → 0.74.0) ([#156](https://github.com/home-operations/echo/issues/156)) ([e27050f](https://github.com/home-operations/echo/commit/e27050f261627fda11fb54c0e450fed455debdd9))
+
 ## [0.2.7](https://github.com/home-operations/echo/compare/0.2.6...0.2.7) (2026-10-21)
 
 
