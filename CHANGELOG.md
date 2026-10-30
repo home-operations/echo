@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.2.8](https://github.com/home-operations/echo/compare/0.2.7...0.2.8) (2026-10-30)
+
+
+### Bug Fixes
+
+* **container:** update image mirror.gcr.io/curlimages/curl (11e64e2 → 3fb7e13) ([#163](https://github.com/home-operations/echo/issues/163)) ([3a5f340](https://github.com/home-operations/echo/commit/3a5f3406acd78a77eadeb302302fcc60160fdc3b))
+* **go:** update module github.com/kimmachinegun/automemlimit (v1.0.0 → v1.0.1) ([#160](https://github.com/home-operations/echo/issues/160)) ([5715260](https://github.com/home-operations/echo/commit/57152601916b875c11559f03fe7bf67a81da71e0))
+
+
+### Continuous Integration
+
+* mark issues and PRs stale after 180 days, close 14 days later ([43999e4](https://github.com/home-operations/echo/commit/43999e4eb05deffe3674b7112911ceac9ffccd82))
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action docker/github-builder (v1.18.0 → v1.18.1) ([#159](https://github.com/home-operations/echo/issues/159)) ([d0254c9](https://github.com/home-operations/echo/commit/d0254c915e5d5d6d4939bcc91b39e70ea27acbe1))
+* **github-action:** update action docker/login-action (v4.6.0 → v4.7.0) ([#161](https://github.com/home-operations/echo/issues/161)) ([7fa889c](https://github.com/home-operations/echo/commit/7fa889c38bd9ae341b9cad41925d479b573afa48))
+* **github-action:** update action jdx/mise-action (v5.2.1 → v5.2.2) ([#158](https://github.com/home-operations/echo/issues/158)) ([98a33e2](https://github.com/home-operations/echo/commit/98a33e242a317ba2bf6a4e2f4f80f219d8000e36))
+* **github-action:** update action jdx/mise-action (v5.2.2 → v5.2.3) ([#162](https://github.com/home-operations/echo/issues/162)) ([11815ac](https://github.com/home-operations/echo/commit/11815ace95aba39684baffd29087505f1f544e58))
+* **github-action:** update action jdx/mise-action (v5.2.3 → v5.2.4) ([#165](https://github.com/home-operations/echo/issues/165)) ([b2bc383](https://github.com/home-operations/echo/commit/b2bc383387bcdb9f9896ca898ed39c6cb66e9d65))
+* **github-action:** update github-actions ([#155](https://github.com/home-operations/echo/issues/155)) ([b82da9a](https://github.com/home-operations/echo/commit/b82da9a4e6f5e815a0eec95b3294a75343dc4712))
+* **mise:** update tool aqua:dadav/helm-schema (0.23.5 → 0.24.0) ([#153](https://github.com/home-operations/echo/issues/153)) ([80e1d87](https://github.com/home-operations/echo/commit/80e1d87870012fe06d9e262b38e371fc4563aea3))
+* **mise:** update tool cosign (3.1.3 → 3.1.4) ([#157](https://github.com/home-operations/echo/issues/157)) ([3492f2d](https://github.com/home-operations/echo/commit/3492f2dc027c25910fe89a6e30d0469c93a32db0))
+* **mise:** update tool oxfmt (0.73.0 → 0.74.0) ([#156](https://github.com/home-operations/echo/issues/156)) ([e27050f](https://github.com/home-operations/echo/commit/e27050f261627fda11fb54c0e450fed455debdd9))
+* **mise:** update tool oxfmt (0.74.0 → 0.75.0) ([#164](https://github.com/home-operations/echo/issues/164)) ([2d23a57](https://github.com/home-operations/echo/commit/2d23a57d570613bc3b03d84f0eca92a46902aaea))
+* **renovate:** extend the org preset from home-operations/.github ([5133c0d](https://github.com/home-operations/echo/commit/5133c0d8b668be65d9874060ba7eedd931ae1394))
+
 ## [0.2.7](https://github.com/home-operations/echo/compare/0.2.6...0.2.7) (2026-10-21)
 
 
