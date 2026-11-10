@@ -7,7 +7,7 @@ require (
 	github.com/caarlos0/env/v11 v11.4.2
 	github.com/coder/websocket v1.8.15
 	github.com/prometheus/client_golang v1.25.0
-	golang.org/x/sync v0.24.0
+	golang.org/x/sync v0.25.0
 )
 
 require (
