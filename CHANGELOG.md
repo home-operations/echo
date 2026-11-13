@@ -1,5 +1,47 @@
 # Changelog
 
+## [0.2.8](https://github.com/home-operations/echo/compare/0.2.7...0.2.8) (2026-11-13)
+
+
+### Bug Fixes
+
+* **container:** update image mirror.gcr.io/curlimages/curl (11e64e2 → 3fb7e13) ([#163](https://github.com/home-operations/echo/issues/163)) ([3a5f340](https://github.com/home-operations/echo/commit/3a5f3406acd78a77eadeb302302fcc60160fdc3b))
+* **go:** update module github.com/kimmachinegun/automemlimit (v1.0.0 → v1.0.1) ([#160](https://github.com/home-operations/echo/issues/160)) ([5715260](https://github.com/home-operations/echo/commit/57152601916b875c11559f03fe7bf67a81da71e0))
+
+
+### Continuous Integration
+
+* **govulncheck:** run the scan on a schedule ([6360a0e](https://github.com/home-operations/echo/commit/6360a0eb6fafc520f826be728d071f4a40a80f61))
+* mark issues and PRs stale after 180 days, close 14 days later ([43999e4](https://github.com/home-operations/echo/commit/43999e4eb05deffe3674b7112911ceac9ffccd82))
+* replace the shared workflow-lint action with zizmor-action ([6dc0cf4](https://github.com/home-operations/echo/commit/6dc0cf495b6883e781575c5e004b017c3326390b))
+
+
+### Miscellaneous Chores
+
+* **github-action:** update action docker/github-builder (v1.18.0 → v1.18.1) ([#159](https://github.com/home-operations/echo/issues/159)) ([d0254c9](https://github.com/home-operations/echo/commit/d0254c915e5d5d6d4939bcc91b39e70ea27acbe1))
+* **github-action:** update action docker/github-builder (v1.18.1 → v1.19.0) ([#172](https://github.com/home-operations/echo/issues/172)) ([1ad75ec](https://github.com/home-operations/echo/commit/1ad75ecb70de12abadf08243a610877c8cf14f75))
+* **github-action:** update action docker/login-action (v4.6.0 → v4.7.0) ([#161](https://github.com/home-operations/echo/issues/161)) ([7fa889c](https://github.com/home-operations/echo/commit/7fa889c38bd9ae341b9cad41925d479b573afa48))
+* **github-action:** update action docker/login-action (v4.7.0 → v4.8.0) ([#171](https://github.com/home-operations/echo/issues/171)) ([65f6484](https://github.com/home-operations/echo/commit/65f648429b9409e40bff278aff534e3e27088ec2))
+* **github-action:** update action helm/kind-action (v1.15.1 → v1.15.2) ([#170](https://github.com/home-operations/echo/issues/170)) ([7e89aea](https://github.com/home-operations/echo/commit/7e89aea211a4b2804e2e012de5cdbabd7aef4fb0))
+* **github-action:** update action jdx/mise-action (v5.2.1 → v5.2.2) ([#158](https://github.com/home-operations/echo/issues/158)) ([98a33e2](https://github.com/home-operations/echo/commit/98a33e242a317ba2bf6a4e2f4f80f219d8000e36))
+* **github-action:** update action jdx/mise-action (v5.2.2 → v5.2.3) ([#162](https://github.com/home-operations/echo/issues/162)) ([11815ac](https://github.com/home-operations/echo/commit/11815ace95aba39684baffd29087505f1f544e58))
+* **github-action:** update action jdx/mise-action (v5.2.3 → v5.2.4) ([#165](https://github.com/home-operations/echo/issues/165)) ([b2bc383](https://github.com/home-operations/echo/commit/b2bc383387bcdb9f9896ca898ed39c6cb66e9d65))
+* **github-action:** update action jdx/mise-action (v5.2.4 → v5.2.5) ([#167](https://github.com/home-operations/echo/issues/167)) ([8bc4d30](https://github.com/home-operations/echo/commit/8bc4d30e9cbfc6bc47eef5a20723167713306767))
+* **github-action:** update action jdx/mise-action (v5.2.6 → v5.2.7) ([#174](https://github.com/home-operations/echo/issues/174)) ([1cf5719](https://github.com/home-operations/echo/commit/1cf57193b379fed5d8421033c6a80223819446f2))
+* **github-action:** update github-actions ([#155](https://github.com/home-operations/echo/issues/155)) ([b82da9a](https://github.com/home-operations/echo/commit/b82da9a4e6f5e815a0eec95b3294a75343dc4712))
+* **github-action:** update github-actions ([#168](https://github.com/home-operations/echo/issues/168)) ([756ffb9](https://github.com/home-operations/echo/commit/756ffb929a8d2bfbc64acbd7d3d6f0c8334f185d))
+* **go:** update module github.com/caarlos0/env/v11 (v11.4.1 → v11.4.2) ([#166](https://github.com/home-operations/echo/issues/166)) ([535c5f1](https://github.com/home-operations/echo/commit/535c5f12c283db237fad5238c8e0b28778ca8405))
+* **go:** update module golang.org/x/sync (v0.24.0 → v0.25.0) ([#175](https://github.com/home-operations/echo/issues/175)) ([391960c](https://github.com/home-operations/echo/commit/391960cb84ece9312bf8ff636b4dfa87491108f1))
+* **mise:** update tool aqua:dadav/helm-schema (0.23.5 → 0.24.0) ([#153](https://github.com/home-operations/echo/issues/153)) ([80e1d87](https://github.com/home-operations/echo/commit/80e1d87870012fe06d9e262b38e371fc4563aea3))
+* **mise:** update tool cosign (3.1.3 → 3.1.4) ([#157](https://github.com/home-operations/echo/issues/157)) ([3492f2d](https://github.com/home-operations/echo/commit/3492f2dc027c25910fe89a6e30d0469c93a32db0))
+* **mise:** update tool go (1.27.3 → 1.27.4) ([#177](https://github.com/home-operations/echo/issues/177)) ([a6945da](https://github.com/home-operations/echo/commit/a6945da7f74a0921a763b88f6e1d0a9d2adb0c54))
+* **mise:** update tool oxfmt (0.73.0 → 0.74.0) ([#156](https://github.com/home-operations/echo/issues/156)) ([e27050f](https://github.com/home-operations/echo/commit/e27050f261627fda11fb54c0e450fed455debdd9))
+* **mise:** update tool oxfmt (0.74.0 → 0.75.0) ([#164](https://github.com/home-operations/echo/issues/164)) ([2d23a57](https://github.com/home-operations/echo/commit/2d23a57d570613bc3b03d84f0eca92a46902aaea))
+* **mise:** update tool yq (4.54.1 → 4.54.2) ([#173](https://github.com/home-operations/echo/issues/173)) ([7c1e49f](https://github.com/home-operations/echo/commit/7c1e49f88be28e3572686a7b93648c9ca46b6e5d))
+* **mise:** update tool yq (4.54.2 → 4.54.3) ([#176](https://github.com/home-operations/echo/issues/176)) ([09b3014](https://github.com/home-operations/echo/commit/09b301411fc880354988ba1259fd30636f1dfaf9))
+* **mise:** update tool zizmor (1.31.1 → 1.32.0) ([#169](https://github.com/home-operations/echo/issues/169)) ([e6b9d76](https://github.com/home-operations/echo/commit/e6b9d76c9de2908f538f0f7e081882490ea0bf94))
+* **renovate:** extend the org preset from home-operations/.github ([5133c0d](https://github.com/home-operations/echo/commit/5133c0d8b668be65d9874060ba7eedd931ae1394))
+
 ## [0.2.7](https://github.com/home-operations/echo/compare/0.2.6...0.2.7) (2026-10-21)
 
 
